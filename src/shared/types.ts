@@ -74,8 +74,11 @@ export interface DictionaryLookupResponse {
 
 export interface PageTranslationState {
   active: boolean;
+  translating: boolean;
   translatedCount: number;
+  totalCount: number;
   engineUsed: string;
+  lastError?: string;
 }
 
 export interface HfModelStatus {

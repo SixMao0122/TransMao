@@ -42,6 +42,8 @@ type TranslationPipeline = (
 
 let activePipeline: TranslationPipeline | null = null;
 let loadedModelId: HfModelId | null = null;
+let loadingPromise: Promise<TranslationPipeline> | null = null;
+let loadingModelId: HfModelId | null = null;
 let status: HfModelStatus = {
   ready: false,
   loading: false,
@@ -67,61 +69,73 @@ async function ensureModelLoaded(modelId: HfModelId): Promise<TranslationPipelin
     return activePipeline;
   }
 
-  // 在每次載入模型前再次強制鎖定本機 ORT WASM 路徑，避免非同步初始化覆寫為遠端 CDN
-  configureLocalOnnxRuntime();
+  // 防止多個批次同時觸發重複下載與初始化模型
+  if (loadingPromise && loadingModelId === modelId) {
+    return loadingPromise;
+  }
 
-  status = {
-    ready: false,
-    loading: true,
-    progress: 0,
-    modelId,
-  };
+  loadingModelId = modelId;
+  loadingPromise = (async () => {
+    configureLocalOnnxRuntime();
 
-  try {
-    const preferredDevice = await detectPreferredDevice();
-    let translator: unknown;
-    try {
-      translator = await pipeline('translation', modelId, {
-        dtype: 'q8',
-        device: preferredDevice,
-        progress_callback: (info: { status?: string; progress?: number }) => {
-          if (typeof info.progress === 'number') {
-            status.progress = Math.round(info.progress);
-          }
-        },
-      });
-    } catch {
-      // 若 WebGPU 初始化失敗，無縫自動降級至本機 WASM
-      translator = await pipeline('translation', modelId, {
-        dtype: 'q8',
-        device: 'wasm',
-        progress_callback: (info: { status?: string; progress?: number }) => {
-          if (typeof info.progress === 'number') {
-            status.progress = Math.round(info.progress);
-          }
-        },
-      });
-    }
-
-    activePipeline = translator as unknown as TranslationPipeline;
-    loadedModelId = modelId;
-    status = {
-      ready: true,
-      loading: false,
-      progress: 100,
-      modelId,
-    };
-    return activePipeline;
-  } catch (err) {
     status = {
       ready: false,
-      loading: false,
+      loading: true,
       progress: 0,
       modelId,
-      error: err instanceof Error ? err.message : String(err),
     };
-    throw err;
-  }
+
+    try {
+      const preferredDevice = await detectPreferredDevice();
+      let translator: unknown;
+      try {
+        translator = await pipeline('translation', modelId, {
+          dtype: 'q8',
+          device: preferredDevice,
+          progress_callback: (info: { status?: string; progress?: number }) => {
+            if (typeof info.progress === 'number') {
+              status.progress = Math.round(info.progress);
+            }
+          },
+        });
+      } catch {
+        // 若 WebGPU 初始化失敗，無縫自動降級至本機 WASM
+        translator = await pipeline('translation', modelId, {
+          dtype: 'q8',
+          device: 'wasm',
+          progress_callback: (info: { status?: string; progress?: number }) => {
+            if (typeof info.progress === 'number') {
+              status.progress = Math.round(info.progress);
+            }
+          },
+        });
+      }
+
+      activePipeline = translator as unknown as TranslationPipeline;
+      loadedModelId = modelId;
+      status = {
+        ready: true,
+        loading: false,
+        progress: 100,
+        modelId,
+      };
+      return activePipeline;
+    } catch (err) {
+      status = {
+        ready: false,
+        loading: false,
+        progress: 0,
+        modelId,
+        error: err instanceof Error ? err.message : String(err),
+      };
+      throw err;
+    } finally {
+      loadingPromise = null;
+      loadingModelId = null;
+    }
+  })();
+
+  return loadingPromise;
 }
 
 async function runLocalTranslation(texts: string[], modelId: HfModelId): Promise<string[]> {

@@ -4,6 +4,7 @@ import {
   PageTranslationState,
   RuntimeMessage,
   TranslationBatchResponse,
+  TranslationEngineMode,
 } from '../shared/types';
 
 const SKIP_TAGS = new Set([
@@ -30,9 +31,13 @@ const STYLE_ID = 'transmao-page-style';
 
 export class PageDomTranslator {
   private active = false;
+  private translating = false;
   private mode: DisplayMode = 'bilingual';
+  private engineMode: TranslationEngineMode = 'auto';
   private engineUsed = '';
   private translatedCount = 0;
+  private totalCount = 0;
+  private lastError: string | undefined;
 
   // 保存原始文字節點內容，供「還原原文」時精準復原
   private originalTextMap = new Map<Text, string>();
@@ -45,32 +50,48 @@ export class PageDomTranslator {
   public getState(): PageTranslationState {
     return {
       active: this.active,
+      translating: this.translating,
       translatedCount: this.translatedCount,
+      totalCount: this.totalCount,
       engineUsed: this.engineUsed,
+      lastError: this.lastError,
     };
   }
 
-  public async toggle(mode: DisplayMode): Promise<PageTranslationState> {
+  /**
+   * 非阻塞切換整頁翻譯：
+   * 立即回傳狀態，背景漸進式翻譯可視區域段落，絕不讓 Popup 按鈕卡死。
+   */
+  public toggle(mode: DisplayMode, engineMode: TranslationEngineMode = 'auto'): PageTranslationState {
     if (this.active) {
       this.restore();
       return this.getState();
     }
-    await this.translatePage(mode);
+    this.startPageTranslation(mode, engineMode);
     return this.getState();
   }
 
-  public async translatePage(mode: DisplayMode): Promise<void> {
+  public startPageTranslation(mode: DisplayMode, engineMode: TranslationEngineMode = 'auto'): void {
     this.mode = mode;
+    this.engineMode = engineMode;
     this.active = true;
+    this.lastError = undefined;
     this.ensurePageStyles();
 
     const textNodes = this.collectTextNodes(document.body);
-    await this.translateNodes(textNodes);
+    this.totalCount = textNodes.length;
+    this.translating = textNodes.length > 0;
     this.startMutationObserver();
+
+    if (textNodes.length > 0) {
+      void this.translateNodes(textNodes);
+    }
   }
 
   public restore(): void {
     this.active = false;
+    this.translating = false;
+    this.lastError = undefined;
     this.stopMutationObserver();
 
     for (const el of this.insertedNodes) {
@@ -86,6 +107,7 @@ export class PageDomTranslator {
     this.originalTextMap.clear();
     this.processedNodes = new WeakSet<Node>();
     this.translatedCount = 0;
+    this.totalCount = 0;
   }
 
   private ensurePageStyles(): void {
@@ -182,36 +204,45 @@ export class PageDomTranslator {
       rawTexts.push(text);
     }
 
-    // 2. 採用小批次漸進回傳（每批最多 6 段），無論雲端或 HF 本地模型都能邊翻邊顯示
-    const batches = splitIntoBatches(rawTexts, 900, 6);
+    // 2. 依引擎特性採用小批次漸進回傳：HF 本地模型每批 2 段，讓首屏最快顯示
+    const isLocalHf = this.engineMode === 'hf-local';
+    const batches = splitIntoBatches(rawTexts, isLocalHf ? 450 : 900, isLocalHf ? 2 : 6);
     let offset = 0;
+    this.translating = true;
 
-    for (const batch of batches) {
-      if (!this.active) break;
-
-      const sliceNodes = validNodes.slice(offset, offset + batch.length);
-      offset += batch.length;
-
-      try {
-        const res = (await chrome.runtime.sendMessage({
-          type: 'TRANSLATE_BATCH',
-          texts: batch,
-        } satisfies RuntimeMessage)) as TranslationBatchResponse;
-
+    try {
+      for (const batch of batches) {
         if (!this.active) break;
-        if (res?.ok && Array.isArray(res.translations)) {
-          this.engineUsed = res.engineUsed ?? this.engineUsed;
-          res.translations.forEach((zh, idx) => {
-            const targetNode = sliceNodes[idx];
-            if (!targetNode || !targetNode.isConnected) return;
-            if (!zh || zh.trim() === batch[idx]) return;
-            this.applyTranslation(targetNode, zh.trim());
-            this.translatedCount++;
-          });
+
+        const sliceNodes = validNodes.slice(offset, offset + batch.length);
+        offset += batch.length;
+
+        try {
+          const res = (await chrome.runtime.sendMessage({
+            type: 'TRANSLATE_BATCH',
+            texts: batch,
+            engine: this.engineMode,
+          } satisfies RuntimeMessage)) as TranslationBatchResponse;
+
+          if (!this.active) break;
+          if (res?.ok && Array.isArray(res.translations)) {
+            this.engineUsed = res.engineUsed ?? this.engineUsed;
+            res.translations.forEach((zh, idx) => {
+              const targetNode = sliceNodes[idx];
+              if (!targetNode || !targetNode.isConnected) return;
+              if (!zh || zh.trim() === batch[idx]) return;
+              this.applyTranslation(targetNode, zh.trim());
+              this.translatedCount++;
+            });
+          } else if (res?.error) {
+            this.lastError = res.error;
+          }
+        } catch (err) {
+          this.lastError = err instanceof Error ? err.message : String(err);
         }
-      } catch {
-        // 單一批次失敗時不中斷整頁翻譯
       }
+    } finally {
+      this.translating = false;
     }
   }
 

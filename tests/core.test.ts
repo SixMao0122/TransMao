@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { translateBatchWithFailover } from '../src/shared/engines';
+import { lookupDictionary, translateBatchWithFailover } from '../src/shared/engines';
 import { toTraditionalTW } from '../src/shared/opencc';
 import {
   clampPopoverPosition,
@@ -97,5 +97,41 @@ describe('多引擎自動容錯 (Failover Router)', () => {
     expect(res.engineUsed).toContain('HuggingFace');
     expect(res.translations[0]).toBe('伺服器記憶體');
     expect(localMock).toHaveBeenCalledOnce();
+  });
+
+  it('lookupDictionary 遇到中文詞性回傳時正確輸出 n. 名詞且不重複', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('translate.googleapis.com')) {
+        if (url.includes('dt=bd')) {
+          return new Response(
+            JSON.stringify([
+              [['貯存', 'storage']],
+              [['名詞', ['保管', '儲存']]],
+              'en',
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              [['名詞', [['the action of storing', 'id1', 'easy <b>storage</b>']]]],
+            ]),
+            { status: 200 }
+          );
+        }
+        return new Response(JSON.stringify([[['方便存放', 'easy storage']]]), { status: 200 });
+      }
+      return new Response('Not Found', { status: 404 });
+    });
+
+    const dict = await lookupDictionary('storage', 'auto');
+    expect(dict.translation).toBe('貯存');
+    expect(dict.meanings[0]?.partOfSpeechZh).toBe('n. 名詞');
+    expect(dict.meanings[0]?.definitions[0]?.example?.en).toBe('easy storage');
+    expect(dict.meanings[0]?.definitions[0]?.example?.zh).toBe('方便存放');
   });
 });

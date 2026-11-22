@@ -36,17 +36,17 @@ async function translateViaOffscreenHf(texts: string[], modelId: HfModelId): Pro
   return res.translations;
 }
 
-// 安裝或更新時建立簡潔右鍵選單
+// 安裝或更新時建立清晰直覺的右鍵選單
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: 'transmao-toggle-page',
-      title: '翻譯此頁',
+      title: '譯貓：翻譯為繁體中文 ⇄ 還原英文',
       contexts: ['page'],
     });
     chrome.contextMenus.create({
       id: 'transmao-lookup-selection',
-      title: '查詢「%s」',
+      title: '譯貓：查詢「%s」',
       contexts: ['selection'],
     });
   });

@@ -129,13 +129,12 @@ document.addEventListener('keydown', (event) => {
   // 快捷鍵 Alt + T：快速開關全頁翻譯
   if (event.altKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === 't') {
     event.preventDefault();
-    void translator.toggle(settings.displayMode).then((state) => {
-      popover.showToast(
-        state.active
-          ? `TransMao 已開啟${settings.displayMode === 'bilingual' ? '雙語對照' : '繁中替換'}（Alt+T）`
-          : 'TransMao 已還原原始英文網頁'
-      );
-    });
+    const state = translator.toggle(settings.displayMode, settings.engine);
+    popover.showToast(
+      state.active
+        ? `TransMao 已啟動${settings.displayMode === 'bilingual' ? '雙語對照' : '繁中替換'}（Alt+T）`
+        : 'TransMao 已還原為英文原文'
+    );
   }
 });
 
@@ -143,23 +142,16 @@ document.addEventListener('keydown', (event) => {
 chrome.runtime.onMessage.addListener((msg: RuntimeMessage, _sender, sendResponse) => {
   if (msg.type === 'TOGGLE_PAGE_TRANSLATE') {
     const mode = msg.displayMode ?? settings.displayMode;
-    translator
-      .toggle(mode)
-      .then((state) => {
-        if (state.active) {
-          popover.showToast(
-            `TransMao 已開啟${mode === 'bilingual' ? '雙語對照' : '繁中替換'}（${state.engineUsed || '運作中'}）`
-          );
-        } else {
-          popover.showToast('TransMao 已還原原始英文網頁');
-        }
-        sendResponse({ ok: true, state });
-      })
-      .catch((err) => {
-        popover.showToast(`TransMao 翻譯發生錯誤：${String(err)}`);
-        sendResponse({ ok: false, error: String(err) });
-      });
-    return true;
+    const state = translator.toggle(mode, settings.engine);
+    if (state.active) {
+      popover.showToast(
+        `TransMao 正在翻譯（${mode === 'bilingual' ? '雙語對照' : '繁中替換'}）`
+      );
+    } else {
+      popover.showToast('TransMao 已還原為英文原文');
+    }
+    sendResponse({ ok: true, state });
+    return false;
   }
 
   if (msg.type === 'GET_PAGE_STATE') {
