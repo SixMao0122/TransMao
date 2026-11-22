@@ -39,6 +39,7 @@
     "contextMenus"
   ],
   "host_permissions": [
+    "https://clients5.google.com/*",
     "https://translate.googleapis.com/*",
     "https://api.mymemory.translated.net/*",
     "https://api.dictionaryapi.dev/*",

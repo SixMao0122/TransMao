@@ -16,7 +16,35 @@ async function fetchWithTimeout(url: string, init?: RequestInit, timeoutMs = FET
 }
 
 /**
- * 引擎 1：Google Translate 免 Key RPC (速度最快、支援批次)
+ * 引擎 1A：Google Clients5 (dict-chrome-ex) — 原生支援多 q 參數批次陣列回傳，無分隔符錯位問題
+ */
+export async function translateViaGoogleClients5Batch(texts: string[]): Promise<string[]> {
+  if (texts.length === 0) return [];
+  const params = new URLSearchParams({
+    client: 'dict-chrome-ex',
+    sl: 'en',
+    tl: 'zh-TW',
+  });
+  for (const text of texts) {
+    params.append('q', text);
+  }
+  const url = `https://clients5.google.com/translate_a/t?${params.toString()}`;
+  const res = await fetchWithTimeout(url);
+  if (!res.ok) {
+    throw new Error(`Google Clients5 HTTP ${res.status}`);
+  }
+  const data = (await res.json()) as unknown;
+  if (!Array.isArray(data) || data.length !== texts.length) {
+    throw new Error('Google Clients5 invalid payload');
+  }
+  return data.map((item) => {
+    const raw = Array.isArray(item) ? String(item[0] ?? '') : String(item ?? '');
+    return toTraditionalTW(raw.trim());
+  });
+}
+
+/**
+ * 引擎 1B：Google Translate GTX 免 Key RPC (備用主機，速度極快)
  */
 export async function translateViaGoogleSingle(text: string): Promise<string> {
   const url =
@@ -111,8 +139,12 @@ export async function translateBatchWithFailover(
   }
 
   type EngineRunner = { name: string; run: () => Promise<string[]> };
+  const clients5Runner: EngineRunner = {
+    name: 'Google Clients5 (zh-TW)',
+    run: () => translateViaGoogleClients5Batch(texts),
+  };
   const googleRunner: EngineRunner = {
-    name: 'Google (zh-TW)',
+    name: 'Google GTX (zh-TW)',
     run: () => translateViaGoogleBatch(texts),
   };
   const myMemoryRunner: EngineRunner = {
@@ -132,17 +164,19 @@ export async function translateBatchWithFailover(
   let pipeline: EngineRunner[];
   switch (mode) {
     case 'hf-local':
-      pipeline = hfRunner ? [hfRunner, googleRunner, myMemoryRunner] : [googleRunner, myMemoryRunner];
+      pipeline = hfRunner ? [hfRunner, clients5Runner, googleRunner, myMemoryRunner] : [clients5Runner, googleRunner, myMemoryRunner];
       break;
     case 'mymemory':
-      pipeline = [myMemoryRunner, googleRunner];
+      pipeline = [myMemoryRunner, clients5Runner, googleRunner];
       break;
     case 'google':
-      pipeline = [googleRunner, myMemoryRunner];
+      pipeline = [clients5Runner, googleRunner, myMemoryRunner];
       break;
     case 'auto':
     default:
-      pipeline = hfRunner ? [googleRunner, myMemoryRunner, hfRunner] : [googleRunner, myMemoryRunner];
+      pipeline = hfRunner
+        ? [clients5Runner, googleRunner, myMemoryRunner, hfRunner]
+        : [clients5Runner, googleRunner, myMemoryRunner];
       break;
   }
 

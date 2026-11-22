@@ -70,10 +70,10 @@ describe('多引擎自動容錯 (Failover Router)', () => {
     vi.restoreAllMocks();
   });
 
-  it('當 Google 回傳 429 失效時，自動降級切換至 MyMemory 備援引擎', async () => {
+  it('當 Google 雙主機 (clients5 與 gtx) 均回傳 429 失效時，自動降級切換至 MyMemory 備援引擎', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = String(input);
-      if (url.includes('translate.googleapis.com')) {
+      if (url.includes('clients5.google.com') || url.includes('translate.googleapis.com')) {
         return new Response('Too Many Requests', { status: 429 });
       }
       return new Response(
@@ -88,7 +88,7 @@ describe('多引擎自動容錯 (Failover Router)', () => {
     const res = await translateBatchWithFailover(['This software is great'], 'auto');
     expect(res.engineUsed).toContain('MyMemory');
     expect(res.translations[0]).toContain('軟體');
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
   });
 
   it('選用 hf-local 模式時優先呼叫本地 Hugging Face 模型並輸出繁體中文', async () => {

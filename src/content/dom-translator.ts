@@ -43,7 +43,14 @@ export class PageDomTranslator {
   private originalTextMap = new Map<Text, string>();
   private insertedNodes = new Set<HTMLElement>();
   private processedNodes = new WeakSet<Node>();
-  private observer: MutationObserver | null = null;
+
+  // 捲動懶載入（IntersectionObserver）與串流佇列
+  private intersectionObserver: IntersectionObserver | null = null;
+  private deferredByElement = new Map<Element, Text[]>();
+  private pendingQueue: Text[] = [];
+  private draining = false;
+
+  private mutationObserver: MutationObserver | null = null;
   private mutationTimer: number | null = null;
   private pendingRoots = new Set<Node>();
 
@@ -60,7 +67,7 @@ export class PageDomTranslator {
 
   /**
    * 非阻塞切換整頁翻譯：
-   * 立即回傳狀態，背景漸進式翻譯可視區域段落，絕不讓 Popup 按鈕卡死。
+   * 透過 IntersectionObserver 僅翻譯目前可視畫面段落，滑動到下方時再即時懶載入翻譯。
    */
   public toggle(mode: DisplayMode, engineMode: TranslationEngineMode = 'auto'): PageTranslationState {
     if (this.active) {
@@ -77,21 +84,21 @@ export class PageDomTranslator {
     this.active = true;
     this.lastError = undefined;
     this.ensurePageStyles();
+    this.ensureIntersectionObserver();
 
     const textNodes = this.collectTextNodes(document.body);
-    this.totalCount = textNodes.length;
-    this.translating = textNodes.length > 0;
+    this.scheduleNodesWithViewportLazyLoad(textNodes);
     this.startMutationObserver();
-
-    if (textNodes.length > 0) {
-      void this.translateNodes(textNodes);
-    }
   }
 
   public restore(): void {
     this.active = false;
     this.translating = false;
+    this.draining = false;
     this.lastError = undefined;
+    this.pendingQueue = [];
+    this.deferredByElement.clear();
+    this.stopIntersectionObserver();
     this.stopMutationObserver();
 
     for (const el of this.insertedNodes) {
@@ -140,6 +147,39 @@ export class PageDomTranslator {
     document.head.appendChild(style);
   }
 
+  private ensureIntersectionObserver(): void {
+    this.stopIntersectionObserver();
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        if (!this.active) return;
+        const newlyVisible: Text[] = [];
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const el = entry.target;
+          this.intersectionObserver?.unobserve(el);
+          const list = this.deferredByElement.get(el);
+          if (list) {
+            this.deferredByElement.delete(el);
+            newlyVisible.push(...list);
+          }
+        }
+        if (newlyVisible.length > 0) {
+          this.enqueueNodes(newlyVisible);
+        }
+      },
+      { rootMargin: '280px 0px' }
+    );
+  }
+
+  private stopIntersectionObserver(): void {
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+      this.intersectionObserver = null;
+    }
+  }
+
   private collectTextNodes(root: Node): Text[] {
     const nodes: Text[] = [];
     if (!root) return nodes;
@@ -161,7 +201,7 @@ export class PageDomTranslator {
           el = el.parentElement;
         }
 
-        // 略過不可見的隱藏節點（例如折疊選單、隱藏彈窗），大幅減少無效翻譯數量
+        // 略過不可見的隱藏節點，大幅減少無效翻譯數量
         const rect = parent.getBoundingClientRect();
         if (rect.width === 0 && rect.height === 0) return NodeFilter.FILTER_REJECT;
         const style = window.getComputedStyle(parent);
@@ -181,74 +221,114 @@ export class PageDomTranslator {
     return nodes;
   }
 
-  private async translateNodes(nodes: Text[]): Promise<void> {
+  private scheduleNodesWithViewportLazyLoad(nodes: Text[]): void {
     if (nodes.length === 0) return;
 
-    // 1. 可視區域優先排序：讓螢幕上正在閱讀的段落最先翻出來（大幅降低體感等待時間）
     const vpHeight = window.innerHeight || 900;
-    const scoredNodes = nodes
-      .filter((n) => !this.processedNodes.has(n) && Boolean((n.nodeValue ?? '').trim()))
-      .map((node) => {
-        const rect = node.parentElement?.getBoundingClientRect();
-        const inViewport = rect ? rect.bottom >= 0 && rect.top <= vpHeight : false;
-        const dist = rect ? Math.abs(rect.top) : 99999;
-        return { node, inViewport, dist };
-      })
-      .sort((a, b) => {
-        if (a.inViewport !== b.inViewport) return a.inViewport ? -1 : 1;
-        return a.dist - b.dist;
-      });
+    const immediate: Text[] = [];
 
-    const validNodes: Text[] = [];
-    const rawTexts: string[] = [];
+    for (const node of nodes) {
+      const parent = node.parentElement;
+      if (!parent) continue;
+      const rect = parent.getBoundingClientRect();
+      const nearViewport = rect.bottom >= -200 && rect.top <= vpHeight + 280;
 
-    for (const { node } of scoredNodes) {
+      if (nearViewport || !this.intersectionObserver) {
+        immediate.push(node);
+      } else {
+        const existing = this.deferredByElement.get(parent);
+        if (existing) {
+          existing.push(node);
+        } else {
+          this.deferredByElement.set(parent, [node]);
+          this.intersectionObserver.observe(parent);
+        }
+      }
+    }
+
+    if (immediate.length > 0) {
+      this.enqueueNodes(immediate);
+    }
+  }
+
+  private enqueueNodes(nodes: Text[]): void {
+    let added = 0;
+    for (const node of nodes) {
       if (this.processedNodes.has(node)) continue;
       const text = (node.nodeValue ?? '').trim();
       if (!text) continue;
       this.processedNodes.add(node);
-      validNodes.push(node);
-      rawTexts.push(text);
+      this.pendingQueue.push(node);
+      added++;
     }
 
-    // 2. 依引擎特性採用小批次漸進回傳：HF 本地模型逐段回傳（每批 1 段），確保 1~2 秒內立即顯示且絕不逾時
-    const isLocalHf = this.engineMode === 'hf-local';
-    const batches = splitIntoBatches(rawTexts, isLocalHf ? 360 : 900, isLocalHf ? 1 : 6);
-    let offset = 0;
+    if (added > 0) {
+      this.totalCount += added;
+      if (!this.draining) {
+        void this.drainQueue();
+      }
+    }
+  }
+
+  private async drainQueue(): Promise<void> {
+    if (this.draining) return;
+    this.draining = true;
     this.translating = true;
 
+    const isLocalHf = this.engineMode === 'hf-local';
+    const maxChars = isLocalHf ? 360 : 900;
+    const maxItems = isLocalHf ? 1 : 6;
+
     try {
-      for (const batch of batches) {
-        if (!this.active) break;
+      while (this.active && this.pendingQueue.length > 0) {
+        const chunkNodes = this.pendingQueue.splice(0, maxItems);
+        const validPairs: Array<{ node: Text; text: string }> = [];
+        for (const node of chunkNodes) {
+          if (!node.isConnected) continue;
+          const text = (node.nodeValue ?? '').trim();
+          if (text) validPairs.push({ node, text });
+        }
+        if (validPairs.length === 0) continue;
 
-        const sliceNodes = validNodes.slice(offset, offset + batch.length);
-        offset += batch.length;
+        const batches = splitIntoBatches(
+          validPairs.map((p) => p.text),
+          maxChars,
+          maxItems
+        );
+        let offset = 0;
 
-        try {
-          const res = (await chrome.runtime.sendMessage({
-            type: 'TRANSLATE_BATCH',
-            texts: batch,
-            engine: this.engineMode,
-          } satisfies RuntimeMessage)) as TranslationBatchResponse;
-
+        for (const batch of batches) {
           if (!this.active) break;
-          if (res?.ok && Array.isArray(res.translations)) {
-            this.engineUsed = res.engineUsed ?? this.engineUsed;
-            res.translations.forEach((zh, idx) => {
-              const targetNode = sliceNodes[idx];
-              if (!targetNode || !targetNode.isConnected) return;
-              if (!zh || zh.trim() === batch[idx]) return;
-              this.applyTranslation(targetNode, zh.trim());
-              this.translatedCount++;
-            });
-          } else if (res?.error) {
-            this.lastError = res.error;
+          const slicePairs = validPairs.slice(offset, offset + batch.length);
+          offset += batch.length;
+
+          try {
+            const res = (await chrome.runtime.sendMessage({
+              type: 'TRANSLATE_BATCH',
+              texts: batch,
+              engine: this.engineMode,
+            } satisfies RuntimeMessage)) as TranslationBatchResponse;
+
+            if (!this.active) break;
+            if (res?.ok && Array.isArray(res.translations)) {
+              this.engineUsed = res.engineUsed ?? this.engineUsed;
+              res.translations.forEach((zh, idx) => {
+                const targetNode = slicePairs[idx]?.node;
+                if (!targetNode || !targetNode.isConnected) return;
+                if (!zh || zh.trim() === batch[idx]) return;
+                this.applyTranslation(targetNode, zh.trim());
+                this.translatedCount++;
+              });
+            } else if (res?.error) {
+              this.lastError = res.error;
+            }
+          } catch (err) {
+            this.lastError = err instanceof Error ? err.message : String(err);
           }
-        } catch (err) {
-          this.lastError = err instanceof Error ? err.message : String(err);
         }
       }
     } finally {
+      this.draining = false;
       this.translating = false;
     }
   }
@@ -262,7 +342,6 @@ export class PageDomTranslator {
       return;
     }
 
-    // 雙語對照模式：於原文字節點後方插入隔離 span，不更動父元件事件監聽
     const parent = node.parentNode;
     if (!parent) return;
 
@@ -278,7 +357,7 @@ export class PageDomTranslator {
 
   private startMutationObserver(): void {
     this.stopMutationObserver();
-    this.observer = new MutationObserver((mutations) => {
+    this.mutationObserver = new MutationObserver((mutations) => {
       if (!this.active) return;
       for (const m of mutations) {
         for (const added of m.addedNodes) {
@@ -302,22 +381,22 @@ export class PageDomTranslator {
             }
           }
           if (newNodes.length > 0) {
-            void this.translateNodes(newNodes);
+            this.scheduleNodesWithViewportLazyLoad(newNodes);
           }
         }, 450);
       }
     });
 
-    this.observer.observe(document.body, {
+    this.mutationObserver.observe(document.body, {
       childList: true,
       subtree: true,
     });
   }
 
   private stopMutationObserver(): void {
-    if (this.observer) {
-      this.observer.disconnect();
-      this.observer = null;
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+      this.mutationObserver = null;
     }
     if (this.mutationTimer) {
       window.clearTimeout(this.mutationTimer);
