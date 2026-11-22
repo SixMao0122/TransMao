@@ -99,6 +99,72 @@ describe('多引擎自動容錯 (Failover Router)', () => {
     expect(localMock).toHaveBeenCalledOnce();
   });
 
+  it('auto 模式下當所有雲端引擎皆失效時，自動降級至第 4 層 Hugging Face 本地模型', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      return new Response('Service Unavailable', { status: 503 });
+    });
+    const localMock = vi.fn(async (texts: string[]) =>
+      texts.map(() => '离线模式下的服务器内存')
+    );
+
+    const res = await translateBatchWithFailover(['offline server memory'], 'auto', localMock);
+    expect(res.engineUsed).toContain('HuggingFace');
+    expect(res.translations[0]).toBe('離線模式下的伺服器記憶體');
+    expect(localMock).toHaveBeenCalledOnce();
+    // Clients5 + GTX + MyMemory 皆應依序嘗試過
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('hf-local 模式下若本地模型推論失敗，自動降級備援至 Google Clients5 雲端引擎', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('clients5.google.com')) {
+        return new Response(JSON.stringify([['雲端備援成功']]), { status: 200 });
+      }
+      return new Response('Not Found', { status: 404 });
+    });
+    const failingLocalMock = vi.fn(async () => {
+      throw new Error('WASM OOM');
+    });
+
+    const res = await translateBatchWithFailover(['cloud fallback'], 'hf-local', failingLocalMock);
+    expect(failingLocalMock).toHaveBeenCalledOnce();
+    expect(res.engineUsed).toContain('Clients5');
+    expect(res.translations[0]).toBe('雲端備援成功');
+  });
+
+  it('Google GTX 批次分隔符遭破壞時，自動降級為單筆並發翻譯確保段落對齊', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('clients5.google.com')) {
+        return new Response('Rate Limited', { status: 429 });
+      }
+      if (url.includes('translate.googleapis.com')) {
+        const q = new URL(url).searchParams.get('q') ?? '';
+        // 模擬批次合併請求時分隔符被遠端吃掉
+        if (q.includes('§TM§')) {
+          return new Response(JSON.stringify([[['被合併成單一段落的譯文', q]]]), { status: 200 });
+        }
+        return new Response(JSON.stringify([[[`譯:${q}`, q]]]), { status: 200 });
+      }
+      return new Response('Error', { status: 500 });
+    });
+
+    const res = await translateBatchWithFailover(['First line', 'Second line'], 'google');
+    expect(res.engineUsed).toContain('Google GTX');
+    expect(res.translations).toEqual(['譯:First line', '譯:Second line']);
+  });
+
+  it('當所有翻譯引擎皆無法回應時，拋出清楚的繁體中文錯誤訊息', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      return new Response('Bad Gateway', { status: 502 });
+    });
+
+    await expect(translateBatchWithFailover(['hello'], 'google')).rejects.toThrow(
+      /所有翻譯引擎均暫時無法回應/
+    );
+  });
+
   it('lookupDictionary 遇到中文詞性回傳時正確輸出 n. 名詞且不重複', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = String(input);

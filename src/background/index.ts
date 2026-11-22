@@ -7,34 +7,47 @@ import {
 import { HfModelId, RuntimeMessage, TranslationEngineMode } from '../shared/types';
 
 const OFFSCREEN_URL = 'offscreen.html';
+let creatingOffscreenPromise: Promise<void> | null = null;
 
 async function ensureOffscreenDocument(): Promise<void> {
   if (!chrome.offscreen) {
     throw new Error('目前瀏覽器不支援 Offscreen Document API');
   }
-  const existing = await chrome.offscreen.hasDocument();
-  if (!existing) {
-    await chrome.offscreen.createDocument({
-      url: OFFSCREEN_URL,
-      reasons: [chrome.offscreen.Reason.WORKERS],
-      justification: '在本地執行 Hugging Face Transformers.js 超小翻譯模型',
-    });
+  if (creatingOffscreenPromise) {
+    return creatingOffscreenPromise;
   }
 
-  // 等待 Offscreen Document 內的 offscreen.js 腳本完成初始化與監聽註冊
-  for (let attempt = 0; attempt < 15; attempt++) {
-    try {
-      const pong = (await chrome.runtime.sendMessage({
-        type: 'HF_PING',
-        target: 'offscreen',
-      } satisfies RuntimeMessage)) as { ok?: boolean };
-      if (pong?.ok) return;
-    } catch {
-      // 尚未就緒，等待 120ms 重試
+  creatingOffscreenPromise = (async () => {
+    const existing = await chrome.offscreen.hasDocument();
+    if (!existing) {
+      await chrome.offscreen.createDocument({
+        url: OFFSCREEN_URL,
+        reasons: [chrome.offscreen.Reason.WORKERS],
+        justification: '在本地執行 Hugging Face Transformers.js 超小翻譯模型',
+      });
     }
-    await new Promise((r) => setTimeout(r, 120));
+
+    // 等待 Offscreen Document 內的 offscreen.js 腳本完成初始化與監聽註冊
+    for (let attempt = 0; attempt < 15; attempt++) {
+      try {
+        const pong = (await chrome.runtime.sendMessage({
+          type: 'HF_PING',
+          target: 'offscreen',
+        } satisfies RuntimeMessage)) as { ok?: boolean };
+        if (pong?.ok) return;
+      } catch {
+        // 尚未就緒，等待 120ms 重試
+      }
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    throw new Error('本地模型執行環境啟動逾時');
+  })();
+
+  try {
+    await creatingOffscreenPromise;
+  } finally {
+    creatingOffscreenPromise = null;
   }
-  throw new Error('本地模型執行環境啟動逾時');
 }
 
 /**
@@ -175,6 +188,16 @@ chrome.runtime.onMessage.addListener((msg: RuntimeMessage, _sender, sendResponse
   return false;
 });
 
+function resolveLocalHfFn(
+  mode: TranslationEngineMode,
+  modelId: HfModelId
+): ((batch: string[]) => Promise<string[]>) | undefined {
+  if ((mode === 'auto' || mode === 'hf-local') && Boolean(chrome.offscreen)) {
+    return (batch: string[]) => translateViaOffscreenHf(batch, modelId);
+  }
+  return undefined;
+}
+
 async function handleTranslateBatch(texts: string[], overrideEngine?: TranslationEngineMode) {
   const settings = await getSettings();
   const mode = overrideEngine ?? settings.engine;
@@ -199,10 +222,7 @@ async function handleTranslateBatch(texts: string[], overrideEngine?: Translatio
     };
   }
 
-  const localHfFn =
-    mode === 'hf-local'
-      ? (batch: string[]) => translateViaOffscreenHf(batch, settings.hfModel)
-      : undefined;
+  const localHfFn = resolveLocalHfFn(mode, settings.hfModel);
 
   const { translations: newlyTranslated, engineUsed } = await translateBatchWithFailover(
     missingTexts,
@@ -214,12 +234,16 @@ async function handleTranslateBatch(texts: string[], overrideEngine?: Translatio
   const finalResults = texts.map((t) => cachedMap[t] ?? '');
 
   missingIndices.forEach((origIdx, i) => {
-    const val = newlyTranslated[i] ?? texts[origIdx];
-    finalResults[origIdx] = val;
-    toCache[texts[origIdx]] = val;
+    const translated = newlyTranslated[i]?.trim();
+    finalResults[origIdx] = translated || texts[origIdx];
+    if (translated) {
+      toCache[texts[origIdx]] = translated;
+    }
   });
 
-  await setCachedTranslations(toCache);
+  if (Object.keys(toCache).length > 0) {
+    await setCachedTranslations(toCache);
+  }
 
   return {
     ok: true,
@@ -231,10 +255,7 @@ async function handleTranslateBatch(texts: string[], overrideEngine?: Translatio
 async function handleLookupWord(text: string, overrideEngine?: TranslationEngineMode) {
   const settings = await getSettings();
   const mode = overrideEngine ?? settings.engine;
-  const localHfFn =
-    mode === 'hf-local'
-      ? (batch: string[]) => translateViaOffscreenHf(batch, settings.hfModel)
-      : undefined;
+  const localHfFn = resolveLocalHfFn(mode, settings.hfModel);
 
   const data = await lookupDictionary(text, mode, localHfFn);
   return { ok: true, data };
