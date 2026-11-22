@@ -29,8 +29,9 @@
 
 * **抗失效全頁翻譯（EN → 繁體中文 `zh-TW`）**
   * 支援 **雙語對照模式**（具溫潤紙感底色區塊，清楚區分原文與譯文，且不破壞網頁原有按鈕事件）與 **純繁體中文替換模式**（隨時一鍵還原原文，亦支援快捷鍵 `Alt + T`）。
-  * 內建 **多引擎自動容錯 (Failover)**：`Google RPC` → `MyMemory 免費備援` → `Hugging Face 本地模型`，並自動經過 `OpenCC (s2twp)` 轉換為道地台灣繁體中文慣用語（如：軟體、伺服器、記憶體）。
-  * 支援 SPA 動態頁面監聽（`MutationObserver`），自動排除 `<code>`、`<pre>` 等程式碼區塊。
+  * **捲動懶載入翻譯（`IntersectionObserver`）**：優先翻譯眼前可視畫面段落，往下滑動時再即時翻譯新出現的內容，大幅提升本地模型與長文章體驗。
+  * 內建 **4 層自動容錯管線 (Failover)**：`Google Clients5 (原生多筆陣列)` → `Google GTX RPC` → `MyMemory 免費備援 (5 路並發)` → `Hugging Face 本地模型`，並自動經過 `OpenCC (s2twp)` 轉換為道地台灣繁體中文慣用語（如：軟體、伺服器、記憶體）。
+  * 支援 SPA 動態頁面監聽（`MutationObserver`），自動排除隱藏元素與 `<code>`、`<pre>` 等程式碼區塊。
 * **極速反白懸浮詞典（詞性 · 例句 · 發音）**
   * 反白網頁任何英文單字或片語，立即浮出輕巧的「**譯**」印章圖示（亦可設定直接展開卡片）。
   * 採用 **Shadow DOM 樣式完全隔離**與單次高速字典請求（搭配記憶體快取），顯示：**繁中釋義**、**國際音標**、**色彩分類詞性標籤（`n.`、`v.`、`adj.`…）**、**中英雙語例句**。
@@ -89,9 +90,11 @@ npm run build   # 建置至 dist/（自動打包本地 ORT WASM）
 ## 開發指令
 
 ```bash
-npm run watch      # 監聽變更並自動重新編譯 dist/
-npm run typecheck  # TypeScript 嚴格型別檢查
-npm run test       # 執行 Vitest 單元測試
+npm run watch          # 監聽變更並自動重新編譯 dist/
+npm run typecheck      # TypeScript 嚴格型別檢查
+npm run test           # 執行 Vitest 單元測試
+npm run build:release  # 正式版極小化建置（移除 sourcemap）
+npm run package        # 一鍵打包 release/trans-mao-v0.1.0.zip（可直接上架商店或 GitHub Releases）
 ```
 
 ---

@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate extension icons
+        run: npm run icons
+
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm run test
+
+      - name: Build release bundle
+        run: npm run build:release
+
+      - name: Audit zero remote CDN references in dist
+        run: |
+          node -e "
+            const fs = require('fs'), path = require('path');
+            let hits = 0;
+            function walk(d) {
+              for (const f of fs.readdirSync(d, { withFileTypes: true })) {
+                const p = path.join(d, f.name);
+                if (f.isDirectory()) walk(p);
+                else if (/\.(js|mjs|html|json)$/.test(f.name)) {
+                  const m = fs.readFileSync(p, 'utf8').match(/jsdelivr|unpkg|esm\.sh/g);
+                  if (m) { hits += m.length; console.error('CDN hit:', p); }
+                }
+              }
+            }
+            walk('dist');
+            if (hits > 0) process.exit(1);
+            console.log('CDN audit passed (0 hits).');
+          "

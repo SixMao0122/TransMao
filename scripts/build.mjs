@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const isWatch = process.argv.includes('--watch');
+const isRelease = process.argv.includes('--release');
 const DIST = path.resolve('dist');
 const PUBLIC = path.resolve('public');
 
@@ -49,7 +50,8 @@ function copyStatic() {
 
 const commonOptions = {
   bundle: true,
-  sourcemap: true,
+  sourcemap: !isRelease,
+  minify: isRelease,
   target: ['chrome116', 'edge116', 'firefox121'],
   logLevel: 'info',
   define: {
@@ -58,6 +60,9 @@ const commonOptions = {
 };
 
 async function build() {
+  if (isRelease && fs.existsSync(DIST)) {
+    fs.rmSync(DIST, { recursive: true, force: true });
+  }
   copyStatic();
 
   // 1. Content Script — IIFE bundle so it runs cleanly in isolated world on any website
