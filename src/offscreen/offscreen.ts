@@ -10,6 +10,7 @@ function configureLocalOnnxRuntime(): void {
   const ortBase = chrome.runtime.getURL('ort/');
   const backends = env.backends as {
     onnx?: {
+      logLevel?: 'verbose' | 'info' | 'warning' | 'error' | 'fatal';
       wasm?: {
         wasmPaths?: string | { mjs?: string; wasm?: string };
         numThreads?: number;
@@ -25,6 +26,8 @@ function configureLocalOnnxRuntime(): void {
     backends.onnx.wasm = {};
   }
 
+  // 僅輸出 error 等級，過濾 ONNX Runtime C++ 雜訊警告
+  backends.onnx.logLevel = 'error';
   backends.onnx.wasm.wasmPaths = {
     mjs: `${ortBase}ort-wasm-simd-threaded.jsep.mjs`,
     wasm: `${ortBase}ort-wasm-simd-threaded.jsep.wasm`,

@@ -37,19 +37,37 @@ async function ensureOffscreenDocument(): Promise<void> {
   throw new Error('本地模型執行環境啟動逾時');
 }
 
-async function translateViaOffscreenHf(texts: string[], modelId: HfModelId): Promise<string[]> {
-  await ensureOffscreenDocument();
-  const res = (await chrome.runtime.sendMessage({
-    type: 'HF_TRANSLATE',
-    target: 'offscreen',
-    texts,
-    modelId,
-  } satisfies RuntimeMessage)) as { ok: boolean; translations?: string[]; error?: string };
-
-  if (!res?.ok || !res.translations) {
-    throw new Error(res?.error || 'Hugging Face 本地模型推論失敗');
+/**
+ * MV3 Service Worker 保活輔助函式：
+ * 在執行較耗時的本機模型下載或推論期間，每 15 秒輕量觸發一次 runtime API，
+ * 避免 Chrome 誤判背景閒置而強制中斷訊息通道。
+ */
+async function withServiceWorkerKeepAlive<T>(task: () => Promise<T>): Promise<T> {
+  const timer = setInterval(() => {
+    chrome.runtime.getPlatformInfo().catch(() => {});
+  }, 15000);
+  try {
+    return await task();
+  } finally {
+    clearInterval(timer);
   }
-  return res.translations;
+}
+
+async function translateViaOffscreenHf(texts: string[], modelId: HfModelId): Promise<string[]> {
+  return withServiceWorkerKeepAlive(async () => {
+    await ensureOffscreenDocument();
+    const res = (await chrome.runtime.sendMessage({
+      type: 'HF_TRANSLATE',
+      target: 'offscreen',
+      texts,
+      modelId,
+    } satisfies RuntimeMessage)) as { ok: boolean; translations?: string[]; error?: string };
+
+    if (!res?.ok || !res.translations) {
+      throw new Error(res?.error || 'Hugging Face 本地模型推論失敗');
+    }
+    return res.translations;
+  });
 }
 
 // 安裝或更新時建立清晰直覺的右鍵選單
@@ -72,15 +90,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (!tab?.id) return;
   if (info.menuItemId === 'transmao-toggle-page') {
     const settings = await getSettings();
-    chrome.tabs.sendMessage(tab.id, {
-      type: 'TOGGLE_PAGE_TRANSLATE',
-      displayMode: settings.displayMode,
-    } satisfies RuntimeMessage);
+    chrome.tabs
+      .sendMessage(tab.id, {
+        type: 'TOGGLE_PAGE_TRANSLATE',
+        displayMode: settings.displayMode,
+      } satisfies RuntimeMessage)
+      .catch(() => {});
   } else if (info.menuItemId === 'transmao-lookup-selection' && info.selectionText) {
-    chrome.tabs.sendMessage(tab.id, {
-      type: 'LOOKUP_WORD',
-      text: info.selectionText,
-    } satisfies RuntimeMessage);
+    chrome.tabs
+      .sendMessage(tab.id, {
+        type: 'LOOKUP_WORD',
+        text: info.selectionText,
+      } satisfies RuntimeMessage)
+      .catch(() => {});
   }
 });
 
@@ -110,46 +132,43 @@ chrome.runtime.onMessage.addListener((msg: RuntimeMessage, _sender, sendResponse
   }
 
   if (msg.type === 'HF_PRELOAD' && msg.target !== 'offscreen') {
-    ensureOffscreenDocument()
-      .then(() =>
-        chrome.runtime.sendMessage({
-          type: 'HF_PRELOAD',
-          target: 'offscreen',
-          modelId: msg.modelId,
-        } satisfies RuntimeMessage)
-      )
+    withServiceWorkerKeepAlive(async () => {
+      await ensureOffscreenDocument();
+      return chrome.runtime.sendMessage({
+        type: 'HF_PRELOAD',
+        target: 'offscreen',
+        modelId: msg.modelId,
+      } satisfies RuntimeMessage);
+    })
       .then((res) => sendResponse(res))
       .catch((err) => sendResponse({ ok: false, error: String(err) }));
     return true;
   }
 
   if (msg.type === 'HF_STATUS' && msg.target !== 'offscreen') {
+    const defaultStatus = {
+      ready: false,
+      loading: false,
+      progress: 0,
+      modelId: 'Xenova/opus-mt-en-zh',
+    };
+    if (!chrome.offscreen) {
+      sendResponse({ ok: true, status: defaultStatus });
+      return false;
+    }
     chrome.offscreen
-      ?.hasDocument()
+      .hasDocument()
       .then((has) => {
         if (!has) {
-          sendResponse({
-            ok: true,
-            status: { ready: false, loading: false, progress: 0, modelId: 'Xenova/opus-mt-en-zh' },
-          });
+          sendResponse({ ok: true, status: defaultStatus });
           return;
         }
         chrome.runtime
           .sendMessage({ type: 'HF_STATUS', target: 'offscreen' } satisfies RuntimeMessage)
-          .then((res) => sendResponse(res))
-          .catch(() =>
-            sendResponse({
-              ok: true,
-              status: { ready: false, loading: false, progress: 0, modelId: 'Xenova/opus-mt-en-zh' },
-            })
-          );
+          .then((res) => sendResponse(res ?? { ok: true, status: defaultStatus }))
+          .catch(() => sendResponse({ ok: true, status: defaultStatus }));
       })
-      .catch(() =>
-        sendResponse({
-          ok: true,
-          status: { ready: false, loading: false, progress: 0, modelId: 'Xenova/opus-mt-en-zh' },
-        })
-      );
+      .catch(() => sendResponse({ ok: true, status: defaultStatus }));
     return true;
   }
 
