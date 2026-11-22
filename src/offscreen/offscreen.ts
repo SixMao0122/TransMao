@@ -51,25 +51,11 @@ let status: HfModelStatus = {
   modelId: 'Xenova/opus-mt-en-zh',
 };
 
-async function detectPreferredDevice(): Promise<'webgpu' | 'wasm'> {
-  try {
-    const gpu = (navigator as Navigator & { gpu?: { requestAdapter: () => Promise<unknown> } }).gpu;
-    if (gpu) {
-      const adapter = await gpu.requestAdapter();
-      if (adapter) return 'webgpu';
-    }
-  } catch {
-    // 忽略 WebGPU 偵測錯誤，安全降級為 WASM
-  }
-  return 'wasm';
-}
-
 async function ensureModelLoaded(modelId: HfModelId): Promise<TranslationPipeline> {
   if (activePipeline && loadedModelId === modelId) {
     return activePipeline;
   }
 
-  // 防止多個批次同時觸發重複下載與初始化模型
   if (loadingPromise && loadingModelId === modelId) {
     return loadingPromise;
   }
@@ -81,35 +67,21 @@ async function ensureModelLoaded(modelId: HfModelId): Promise<TranslationPipelin
     status = {
       ready: false,
       loading: true,
-      progress: 0,
+      progress: 1,
       modelId,
     };
 
     try {
-      const preferredDevice = await detectPreferredDevice();
-      let translator: unknown;
-      try {
-        translator = await pipeline('translation', modelId, {
-          dtype: 'q8',
-          device: preferredDevice,
-          progress_callback: (info: { status?: string; progress?: number }) => {
-            if (typeof info.progress === 'number') {
-              status.progress = Math.round(info.progress);
-            }
-          },
-        });
-      } catch {
-        // 若 WebGPU 初始化失敗，無縫自動降級至本機 WASM
-        translator = await pipeline('translation', modelId, {
-          dtype: 'q8',
-          device: 'wasm',
-          progress_callback: (info: { status?: string; progress?: number }) => {
-            if (typeof info.progress === 'number') {
-              status.progress = Math.round(info.progress);
-            }
-          },
-        });
-      }
+      // Marian (opus-mt) 與 NLLB 屬於 Encoder-Decoder seq2seq 模型，在瀏覽器端使用 WASM 最穩定且不卡死
+      const translator = await pipeline('translation', modelId, {
+        dtype: 'q8',
+        device: 'wasm',
+        progress_callback: (info: { status?: string; progress?: number }) => {
+          if (typeof info.progress === 'number') {
+            status.progress = Math.max(1, Math.min(99, Math.round(info.progress)));
+          }
+        },
+      });
 
       activePipeline = translator as unknown as TranslationPipeline;
       loadedModelId = modelId;
@@ -154,7 +126,17 @@ async function runLocalTranslation(texts: string[], modelId: HfModelId): Promise
   return results;
 }
 
+// 僅處理明確發往 offscreen 的內部訊息，避免與 background 訊息通道互相搶佔
 chrome.runtime.onMessage.addListener((msg: RuntimeMessage, _sender, sendResponse) => {
+  if (!('target' in msg) || msg.target !== 'offscreen') {
+    return false;
+  }
+
+  if (msg.type === 'HF_PING') {
+    sendResponse({ ok: true });
+    return false;
+  }
+
   if (msg.type === 'HF_STATUS') {
     sendResponse({ ok: true, status });
     return false;

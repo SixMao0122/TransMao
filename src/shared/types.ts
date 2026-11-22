@@ -95,6 +95,7 @@ export type RuntimeMessage =
   | { type: 'TOGGLE_PAGE_TRANSLATE'; displayMode?: DisplayMode }
   | { type: 'GET_PAGE_STATE' }
   | { type: 'SETTINGS_UPDATED'; settings: UserSettings }
-  | { type: 'HF_TRANSLATE'; texts: string[]; modelId: HfModelId }
-  | { type: 'HF_PRELOAD'; modelId: HfModelId }
-  | { type: 'HF_STATUS' };
+  | { type: 'HF_PING'; target: 'offscreen' }
+  | { type: 'HF_TRANSLATE'; target?: 'offscreen'; texts: string[]; modelId: HfModelId }
+  | { type: 'HF_PRELOAD'; target?: 'offscreen'; modelId: HfModelId }
+  | { type: 'HF_STATUS'; target?: 'offscreen' };

@@ -157,8 +157,15 @@ export class PageDomTranslator {
         let el: HTMLElement | null = parent;
         while (el) {
           if (SKIP_TAGS.has(el.tagName)) return NodeFilter.FILTER_REJECT;
+          if (el.getAttribute('aria-hidden') === 'true' || el.hidden) return NodeFilter.FILTER_REJECT;
           el = el.parentElement;
         }
+
+        // 略過不可見的隱藏節點（例如折疊選單、隱藏彈窗），大幅減少無效翻譯數量
+        const rect = parent.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) return NodeFilter.FILTER_REJECT;
+        const style = window.getComputedStyle(parent);
+        if (style.display === 'none' || style.visibility === 'hidden') return NodeFilter.FILTER_REJECT;
 
         const raw = node.nodeValue ?? '';
         if (!isTranslatableEnglish(raw)) return NodeFilter.FILTER_REJECT;
