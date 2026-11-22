@@ -3,21 +3,25 @@
 
   <br /><br />
 
+  <p>
+    <strong>English</strong> &nbsp;|&nbsp; <a href="./README.zh-TW.md">繁體中文</a>
+  </p>
+
+  [![CI](https://github.com/SixMao0122/TransMao/actions/workflows/ci.yml/badge.svg)](https://github.com/SixMao0122/TransMao/actions/workflows/ci.yml)
   [![License](https://img.shields.io/badge/License-Apache_2.0-c85a32?style=for-the-badge)](./LICENSE)
   [![Manifest V3](https://img.shields.io/badge/Manifest-V3-26231f?style=for-the-badge)](./public/manifest.json)
   [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3b5b8c?style=for-the-badge)](./tsconfig.json)
   [![Hugging Face](https://img.shields.io/badge/Hugging_Face-Transformers.js-2e6f5e?style=for-the-badge)](./src/offscreen/offscreen.ts)
-  [![Language](https://img.shields.io/badge/Target-繁體中文_(zh--TW)-8a6a28?style=for-the-badge)](#)
 
   <p align="center">
-    <strong>TransMao（譯貓）</strong> 是一款專為台灣繁體中文 (<code>zh-TW</code>) 打造的輕量、抗失效網頁翻譯與反白沉浸式查詞瀏覽器擴充套件。<br/>
-    告別原生 Google 翻譯動不動失效的痛點，結合 <strong>多引擎自動容錯</strong>、<strong>Shadow DOM 零污染反白詞典</strong> 與 <strong>Hugging Face 本地超小模型</strong>。
+    <strong>TransMao</strong> is a lightweight, resilient English-to-Traditional Chinese (<code>zh-TW</code>) webpage translation and immersive inline dictionary browser extension.<br/>
+    Built to eliminate broken native browser translations with a <strong>4-layer automatic failover pipeline</strong>, a <strong>Shadow DOM isolated selection dictionary</strong>, and <strong>offline Hugging Face ultra-small models</strong>.
   </p>
 </div>
 
 ---
 
-## 功能預覽 (Preview)
+## Preview
 
 <div align="center">
   <img src="./assets/preview.svg" alt="TransMao Dictionary Popover Preview" width="88%" />
@@ -25,93 +29,92 @@
 
 ---
 
-## 核心特色
+## Key Features
 
-* **抗失效全頁翻譯（EN → 繁體中文 `zh-TW`）**
-  * 支援 **雙語對照模式**（具溫潤紙感底色區塊，清楚區分原文與譯文，且不破壞網頁原有按鈕事件）與 **純繁體中文替換模式**（隨時一鍵還原原文，亦支援快捷鍵 `Alt + T`）。
-  * **捲動懶載入翻譯（`IntersectionObserver`）**：優先翻譯眼前可視畫面段落，往下滑動時再即時翻譯新出現的內容，大幅提升本地模型與長文章體驗。
-  * 內建 **4 層自動容錯管線 (Failover)**：`Google Clients5 (原生多筆陣列)` → `Google GTX RPC` → `MyMemory 免費備援 (5 路並發)` → `Hugging Face 本地模型`，並自動經過 `OpenCC (s2twp)` 轉換為道地台灣繁體中文慣用語（如：軟體、伺服器、記憶體）。
-  * 支援 SPA 動態頁面監聽（`MutationObserver`），自動排除隱藏元素與 `<code>`、`<pre>` 等程式碼區塊。
-* **極速反白懸浮詞典（詞性 · 例句 · 發音）**
-  * 反白網頁任何英文單字或片語，立即浮出輕巧的「**譯**」印章圖示（亦可設定直接展開卡片）。
-  * 採用 **Shadow DOM 樣式完全隔離**與單次高速字典請求（搭配記憶體快取），顯示：**繁中釋義**、**國際音標**、**色彩分類詞性標籤（`n.`、`v.`、`adj.`…）**、**中英雙語例句**。
-  * **雙層發音引擎**：提供 **美音 (US)** 與 **英音 (UK)** 按鈕，優先播放辭典官方真人 MP3 音檔，受限時自動降級為瀏覽器原生 `Web Speech API`。
-  * 內建 **已收藏單字清單**：一鍵收藏生詞，並可在設定頁複習朗讀或匯出 JSON。
-* **支援 Hugging Face 本地超小模型（離線終極備援）**
-  * 內建本地封裝之 ONNX Runtime WASM（完全符合 Chrome MV3 CSP 規範，無遠端腳本依賴），透過 `Offscreen Document` + `@huggingface/transformers` 進行本機推論：
+* **Resilient Full-Page Translation (`EN → zh-TW`)**
+  * **Bilingual Side-by-Side Mode**: Inserts warm paper-tinted Traditional Chinese blocks beneath English paragraphs without breaking host page event listeners, plus a **Replace Mode** with one-click restore (`Alt + T`).
+  * **Viewport Lazy Translation (`IntersectionObserver`)**: Translates only paragraphs visible in the current viewport first and seamlessly translates additional content as you scroll.
+  * **4-Layer Automatic Failover Pipeline**: `Google Clients5 (native multi-query batch)` → `Google GTX RPC` → `MyMemory (5x concurrent fallback)` → `Hugging Face Local Model`, post-processed with `OpenCC (s2twp)` for authentic Taiwan Traditional Chinese vocabulary.
+  * **SPA-Aware DOM Watcher (`MutationObserver`)**: Automatically handles dynamically loaded pages while skipping hidden elements, `<code>`, and `<pre>` blocks.
+* **Instant Selection Dictionary (POS · Examples · Pronunciation)**
+  * Highlight any English word or phrase to reveal a clean seal trigger button (or expand the card immediately).
+  * **100% Isolated Shadow DOM UI** in a warm paper & ink stationery design displaying Traditional Chinese definitions, IPA phonetics, color-coded Parts of Speech (`n.`, `v.`, `adj.`, etc.), and highlighted bilingual example sentences.
+  * **Dual-Layer Audio Pronunciation**: US and UK pronunciation buttons prioritizing real human dictionary MP3 audio with automatic fallback to the browser's `Web Speech API`.
+  * **Saved Vocabulary List**: Bookmark words with one click, replay pronunciations, and export your list to JSON from the Options dashboard.
+* **Offline Hugging Face Ultra-Small Models (Local Fallback)**
+  * Bundles ONNX Runtime WASM locally inside the extension (100% Chrome MV3 CSP compliant, zero remote CDN script execution) via `Offscreen Document` + `@huggingface/transformers`:
 
-| 模型 ID (Hugging Face) | 量化大小 | 特色說明 |
+| Hugging Face Model ID | Quantized Size | Notes |
 | :--- | :--- | :--- |
-| **`Xenova/opus-mt-en-zh`** | ~80 MB | 極輕量、速度最快，自動搭配 `opencc-js` (`s2twp`) 轉為台灣繁體中文 |
-| **`Xenova/nllb-200-distilled-600M`** | ~350 MB | Meta 多語蒸餾翻譯模型，原生支援 `zho_Hant` 繁體中文 |
+| **`Xenova/opus-mt-en-zh`** | ~80 MB | Ultra-lightweight and fast; paired with `opencc-js` (`s2twp`) for `zh-TW` localization |
+| **`Xenova/nllb-200-distilled-600M`** | ~350 MB | Meta distilled multilingual NMT model with native `zho_Hant` support |
 
 ---
 
-## 系統架構 (Architecture)
+## Architecture
 
 ```mermaid
 flowchart LR
-    Webpage["目標英文網頁 DOM"] --> Content["Content Script (TreeWalker + Shadow DOM Popover)"]
-    Content <-->|"chrome.runtime"| BG["Background Service Worker (快取 + Failover Router)"]
-    BG --> Google["Google Rich Dict & RPC (zh-TW)"]
-    BG --> MyMemory["MyMemory 雲端備援"]
-    BG --> Dict["Free Dictionary API (音標/真人 MP3)"]
+    Webpage["Host Webpage DOM"] --> Content["Content Script (IntersectionObserver + Shadow DOM Popover)"]
+    Content <-->|"chrome.runtime"| BG["Background Service Worker (Cache + 4-Layer Failover Router)"]
+    BG --> Clients5["Google Clients5 (Native Batch Array)"]
+    BG --> Google["Google GTX RPC & Rich Dict"]
+    BG --> MyMemory["MyMemory Cloud Fallback (5x Parallel)"]
+    BG --> Dict["Free Dictionary API (IPA / Human MP3)"]
     BG <--> Offscreen["Offscreen Document (Local ORT WASM + Transformers.js)"]
-    Offscreen --> HF["Hugging Face 超小模型 (opus-mt / nllb-200)"]
+    Offscreen --> HF["Hugging Face Small Models (opus-mt / nllb-200)"]
 ```
 
 ---
 
-## 快速開始與本地安裝 (Quick Start)
+## Quick Start
 
-### 1. 環境需求
-* Node.js `>= 20`
-* Chrome / Edge / Brave 等 Chromium 核心瀏覽器
+### Option 1: Install from GitHub Releases (Recommended)
+1. Download the latest `trans-mao-v*.zip` from the [Releases](https://github.com/SixMao0122/TransMao/releases) page and unzip it.
+2. Open `chrome://extensions/` (Chrome) or `edge://extensions/` (Edge).
+3. Enable **Developer mode** in the top-right corner.
+4. Click **Load unpacked** and select the extracted folder.
 
-### 2. 安裝依賴並建置
+### Option 2: Build from Source
+Requires **Node.js `>= 20`**.
+
 ```bash
 git clone https://github.com/SixMao0122/TransMao.git
 cd TransMao
 npm install
-npm run icons   # 產生 16/32/48/128 PNG 擴充套件圖示
-npm run build   # 建置至 dist/（自動打包本地 ORT WASM）
+npm run icons   # Generate 16/32/48/128 PNG extension icons
+npm run build   # Build into dist/ (bundles local ORT WASM)
 ```
 
-### 3. 載入至瀏覽器
-1. 開啟瀏覽器並前往擴充功能管理頁面：
-   * Chrome：`chrome://extensions/`
-   * Edge：`edge://extensions/`
-2. 開啟右上角的 **「開發人員模式 (Developer mode)」**。
-3. 點擊 **「載入未封裝項目 (Load unpacked)」**，選擇本專案的 **`dist/`** 資料夾。
-4. 將 **TransMao 譯貓** 釘選至工具列，前往任意英文網頁即可開始體驗。
+Then load the `dist/` directory via **Load unpacked** in your browser's extension page.
 
 ---
 
-## 開發指令
+## Development Scripts
 
 ```bash
-npm run watch          # 監聽變更並自動重新編譯 dist/
-npm run typecheck      # TypeScript 嚴格型別檢查
-npm run test           # 執行 Vitest 單元測試
-npm run build:release  # 正式版極小化建置（移除 sourcemap）
-npm run package        # 一鍵打包 release/trans-mao-v0.1.0.zip（可直接上架商店或 GitHub Releases）
+npm run watch          # Watch source files and rebuild dist/
+npm run typecheck      # Strict TypeScript type-checking
+npm run test           # Run Vitest unit tests
+npm run build:release  # Minified production build (no sourcemaps)
+npm run package        # Build and zip release/trans-mao-v0.1.0.zip
 ```
 
 ---
 
-## 安全性與隱私 (Security & Privacy)
+## Security & Privacy
 
-TransMao 尊重使用者隱私，不收集任何個人瀏覽紀錄或遙測資料。詳細資訊與漏洞回報管道請參閱 [SECURITY.md](./SECURITY.md)。
-
----
-
-## 參與貢獻 (Contributing)
-
-歡迎提出 Issue、功能建議或 Pull Request！請先閱讀 [CONTRIBUTING.md](./CONTRIBUTING.md) 與 [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)。
+TransMao collects zero telemetry or browsing history. See [SECURITY.md](./SECURITY.md) for privacy details and vulnerability reporting.
 
 ---
 
-## 授權條款 (License)
+## Contributing
 
-本專案採用 **[Apache License 2.0](./LICENSE)** 開源授權。  
-作者: **SxiMao** ([@SixMao0122](https://github.com/SixMao0122))
+Issues, feature suggestions, and pull requests are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) first.
+
+---
+
+## License
+
+Licensed under the **[Apache License 2.0](./LICENSE)**.  
+Author: **SxiMao** ([@SixMao0122](https://github.com/SixMao0122))
