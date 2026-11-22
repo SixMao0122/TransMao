@@ -70,7 +70,7 @@ flowchart LR
 
 ### 2. 安裝依賴並建置
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/SixMao0122/TransMao.git
 cd TransMao
 npm install
 npm run icons   # 產生 16/32/48/128 PNG 擴充套件圖示

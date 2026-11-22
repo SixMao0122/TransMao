@@ -4,6 +4,14 @@
   "description": "TransMao (譯貓) — 專為繁體中文打造的抗失效網頁翻譯與反白沉浸式查詞瀏覽器擴充套件，支援多引擎自動容錯與 Hugging Face 本地超小模型。",
   "author": "SxiMao <https://github.com/SixMao0122>",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/SixMao0122/TransMao#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SixMao0122/TransMao.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SixMao0122/TransMao/issues"
+  },
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
