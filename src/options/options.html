@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TransMao 譯貓 — 進階設定與單字本</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #0b1120;
+        color: #f8fafc;
+        font-family: 'Segoe UI', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+        min-height: 100vh;
+        padding: 32px 20px;
+      }
+      .container {
+        max-width: 820px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #1e1b4b, #311042);
+        border: 1px solid rgba(129, 140, 248, 0.3);
+      }
+      .hero-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .hero-left img {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+      }
+      .hero h1 {
+        font-size: 22px;
+        font-weight: 800;
+      }
+      .hero p {
+        font-size: 13px;
+        color: #cbd5e1;
+        margin-top: 4px;
+      }
+      .card {
+        background: #131c31;
+        border: 1px solid #1e293b;
+        border-radius: 16px;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .card h2 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .field {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        font-size: 13.5px;
+      }
+      .field-desc {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+      select,
+      textarea {
+        background: #0b1120;
+        color: #f8fafc;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-family: inherit;
+      }
+      textarea {
+        width: 100%;
+        min-height: 82px;
+        resize: vertical;
+      }
+      .btn {
+        padding: 8px 16px;
+        border-radius: 10px;
+        border: none;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: filter 0.15s;
+      }
+      .btn:hover {
+        filter: brightness(1.1);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #4f46e5, #ec4899);
+        color: #ffffff;
+      }
+      .btn-secondary {
+        background: #1e293b;
+        color: #cbd5e1;
+        border: 1px solid #334155;
+      }
+      .progress-wrap {
+        width: 100%;
+        height: 8px;
+        background: #0b1120;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid #334155;
+      }
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #6366f1, #ec4899);
+        transition: width 0.25s ease;
+      }
+      .vocab-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .vocab-item {
+        background: #0b1120;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .vocab-word {
+        font-size: 16px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .vocab-zh {
+        font-size: 14px;
+        color: #f472b6;
+        margin-top: 2px;
+      }
+      .vocab-ex {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 5px;
+      }
+      .toast {
+        font-size: 12.5px;
+        color: #34d399;
+        min-height: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="hero">
+        <div class="hero-left">
+          <img src="icons/icon128.png" alt="TransMao" />
+          <div>
+            <h1>TransMao 譯貓 · 進階控制台</h1>
+            <p>開源授權：Apache-2.0 · 由 SxiMao (SixMao0122) 打造</p>
+          </div>
+        </div>
+        <span id="saveMsg" class="toast"></span>
+      </div>
+
+      <!-- Hugging Face 本地超小模型設定 -->
+      <div class="card">
+        <h2>🤗 Hugging Face 本地離線超小模型（抗失效終極備援）</h2>
+        <div class="field">
+          <div>
+            <div>本地翻譯模型選擇</div>
+            <div class="field-desc">首次啟用將自動快取於瀏覽器，之後離線亦可直接翻譯並透過 OpenCC 轉為台灣繁體中文</div>
+          </div>
+          <select id="hfModel">
+            <option value="Xenova/opus-mt-en-zh">Xenova/opus-mt-en-zh（超輕量 ~80MB，極速）</option>
+            <option value="Xenova/nllb-200-distilled-600M">Xenova/nllb-200-distilled-600M（原生繁中 ~350MB）</option>
+          </select>
+        </div>
+        <div class="field">
+          <div id="hfStatusText" class="field-desc">模型狀態：尚未預載（需要時自動載入）</div>
+          <button id="preloadHfBtn" class="btn btn-primary">預先下載並載入模型</button>
+        </div>
+        <div class="progress-wrap">
+          <div id="hfProgressBar" class="progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- 體驗與黑名單設定 -->
+      <div class="card">
+        <h2>⚙️ 體驗與排外網站設定</h2>
+        <div class="field">
+          <div>
+            <div>反白查詞時自動發音</div>
+            <div class="field-desc">打開字典卡片後自動朗讀英文單字（美式發音）</div>
+          </div>
+          <input id="autoSpeak" type="checkbox" style="width: 18px; height: 18px; accent-color: #8b5cf6" />
+        </div>
+        <div>
+          <div style="font-size: 13.5px; margin-bottom: 6px">不啟用反白查詞的網域清單（每行一個網域，例如 <code>localhost</code>）</div>
+          <textarea id="blacklist" placeholder="localhost&#10;docs.google.com"></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <button id="clearCacheBtn" class="btn btn-secondary">清除翻譯快取</button>
+          <button id="saveBtn" class="btn btn-primary">儲存設定</button>
+        </div>
+      </div>
+
+      <!-- 收藏單字本 -->
+      <div class="card">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h2>★ 我的繁中單字本 (<span id="vocabCount">0</span>)</h2>
+          <button id="exportVocabBtn" class="btn btn-secondary">匯出 JSON</button>
+        </div>
+        <div id="vocabList" class="vocab-list"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./options.js"></script>
+  </body>
+</html>

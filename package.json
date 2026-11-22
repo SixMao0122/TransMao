@@ -1,0 +1,36 @@
+{
+  "name": "trans-mao",
+  "version": "0.1.0",
+  "description": "TransMao (譯貓) — 專為繁體中文打造的抗失效網頁翻譯與反白沉浸式查詞瀏覽器擴充套件，支援多引擎自動容錯與 Hugging Face 本地超小模型。",
+  "author": "SxiMao <https://github.com/SixMao0122>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.5.0",
+    "opencc-js": "^1.0.5"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.7",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  },
+  "keywords": [
+    "chrome-extension",
+    "browser-extension",
+    "translation",
+    "traditional-chinese",
+    "zh-tw",
+    "dictionary",
+    "transformers-js",
+    "hugging-face",
+    "open-source"
+  ]
+}
