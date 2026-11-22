@@ -1,5 +1,5 @@
 import { toTraditionalTW } from './opencc';
-import { isSingleEnglishWord, mapPosToZhTW } from './text-utils';
+import { formatPosLabel, isSingleEnglishWord } from './text-utils';
 import { DictionaryMeaning, DictionaryResult, TranslationEngineMode } from './types';
 
 const BATCH_DELIMITER = '\n§TM§\n';
@@ -76,10 +76,19 @@ export async function translateViaMyMemorySingle(text: string): Promise<string> 
 }
 
 export async function translateViaMyMemoryBatch(texts: string[]): Promise<string[]> {
-  const results: string[] = [];
-  for (const text of texts) {
-    results.push(await translateViaMyMemorySingle(text));
+  // 5 路並發請求，大幅加速 MyMemory 整頁翻譯速度（比單條串行快約 5 倍）
+  const concurrency = 5;
+  const results = new Array<string>(texts.length);
+  let cursor = 0;
+
+  async function worker(): Promise<void> {
+    while (cursor < texts.length) {
+      const idx = cursor++;
+      results[idx] = await translateViaMyMemorySingle(texts[idx]);
+    }
   }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, texts.length) }, () => worker()));
   return results;
 }
 
@@ -326,7 +335,6 @@ export async function lookupDictionary(
 
   if (richDict && richDict.meanings.length > 0) {
     richDict.meanings.forEach((m, mIdx) => {
-      const posInfo = mapPosToZhTW(m.partOfSpeech);
       const defs: DictionaryMeaning['definitions'] = [];
 
       if (m.zhTerms.length > 0) {
@@ -355,20 +363,19 @@ export async function lookupDictionary(
       if (defs.length > 0) {
         meanings.push({
           partOfSpeech: m.partOfSpeech,
-          partOfSpeechZh: `${posInfo.short} ${posInfo.zh}`,
+          partOfSpeechZh: formatPosLabel(m.partOfSpeech),
           definitions: defs,
         });
       }
     });
   } else if (freeEntry?.meanings?.length) {
     freeEntry.meanings.slice(0, 2).forEach((m, mIdx) => {
-      const posInfo = mapPosToZhTW(m.partOfSpeech);
       const firstDef = m.definitions[0];
       if (!firstDef) return;
       const ex = firstDef.example;
       meanings.push({
         partOfSpeech: m.partOfSpeech,
-        partOfSpeechZh: `${posInfo.short} ${posInfo.zh}`,
+        partOfSpeechZh: formatPosLabel(m.partOfSpeech),
         definitions: [
           {
             zh: primaryTranslation,

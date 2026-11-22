@@ -70,20 +70,47 @@ export interface PosInfo {
 
 const POS_MAP: Record<string, PosInfo> = {
   noun: { zh: '名詞', short: 'n.', color: '#3B5B8C' },
+  名詞: { zh: '名詞', short: 'n.', color: '#3B5B8C' },
+  名词: { zh: '名詞', short: 'n.', color: '#3B5B8C' },
   verb: { zh: '動詞', short: 'v.', color: '#2E6F5E' },
+  動詞: { zh: '動詞', short: 'v.', color: '#2E6F5E' },
+  动词: { zh: '動詞', short: 'v.', color: '#2E6F5E' },
   adjective: { zh: '形容詞', short: 'adj.', color: '#B4533C' },
+  形容詞: { zh: '形容詞', short: 'adj.', color: '#B4533C' },
+  形容词: { zh: '形容詞', short: 'adj.', color: '#B4533C' },
   adverb: { zh: '副詞', short: 'adv.', color: '#8A6A28' },
+  副詞: { zh: '副詞', short: 'adv.', color: '#8A6A28' },
+  副词: { zh: '副詞', short: 'adv.', color: '#8A6A28' },
   pronoun: { zh: '代名詞', short: 'pron.', color: '#4F6D7A' },
+  代名詞: { zh: '代名詞', short: 'pron.', color: '#4F6D7A' },
+  代词: { zh: '代名詞', short: 'pron.', color: '#4F6D7A' },
   preposition: { zh: '介系詞', short: 'prep.', color: '#6B5B8C' },
+  介系詞: { zh: '介系詞', short: 'prep.', color: '#6B5B8C' },
+  介詞: { zh: '介系詞', short: 'prep.', color: '#6B5B8C' },
+  介词: { zh: '介系詞', short: 'prep.', color: '#6B5B8C' },
   conjunction: { zh: '連接詞', short: 'conj.', color: '#9C5A3C' },
+  連接詞: { zh: '連接詞', short: 'conj.', color: '#9C5A3C' },
+  連詞: { zh: '連接詞', short: 'conj.', color: '#9C5A3C' },
+  连词: { zh: '連接詞', short: 'conj.', color: '#9C5A3C' },
   interjection: { zh: '感嘆詞', short: 'interj.', color: '#A34848' },
+  感嘆詞: { zh: '感嘆詞', short: 'interj.', color: '#A34848' },
+  嘆詞: { zh: '感嘆詞', short: 'interj.', color: '#A34848' },
+  叹词: { zh: '感嘆詞', short: 'interj.', color: '#A34848' },
   determiner: { zh: '限定詞', short: 'det.', color: '#3E7368' },
   exclamation: { zh: '感嘆詞', short: 'excl.', color: '#A34848' },
+  abbreviation: { zh: '縮寫', short: 'abbr.', color: '#57524A' },
+  縮寫: { zh: '縮寫', short: 'abbr.', color: '#57524A' },
 };
 
 export function mapPosToZhTW(pos: string): PosInfo {
   const key = pos.toLowerCase().trim();
-  return POS_MAP[key] ?? { zh: pos, short: pos, color: '#94A3B8' };
+  return POS_MAP[key] ?? { zh: pos.trim(), short: '', color: '#6B655B' };
+}
+
+export function formatPosLabel(pos: string): string {
+  const info = mapPosToZhTW(pos);
+  if (!info.short || info.short === info.zh) return info.zh;
+  return `${info.short} ${info.zh}`;
 }
 
 export interface BoxRect {

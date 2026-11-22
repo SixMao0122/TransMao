@@ -49,6 +49,19 @@ let status: HfModelStatus = {
   modelId: 'Xenova/opus-mt-en-zh',
 };
 
+async function detectPreferredDevice(): Promise<'webgpu' | 'wasm'> {
+  try {
+    const gpu = (navigator as Navigator & { gpu?: { requestAdapter: () => Promise<unknown> } }).gpu;
+    if (gpu) {
+      const adapter = await gpu.requestAdapter();
+      if (adapter) return 'webgpu';
+    }
+  } catch {
+    // 忽略 WebGPU 偵測錯誤，安全降級為 WASM
+  }
+  return 'wasm';
+}
+
 async function ensureModelLoaded(modelId: HfModelId): Promise<TranslationPipeline> {
   if (activePipeline && loadedModelId === modelId) {
     return activePipeline;
@@ -65,15 +78,30 @@ async function ensureModelLoaded(modelId: HfModelId): Promise<TranslationPipelin
   };
 
   try {
-    const translator = await pipeline('translation', modelId, {
-      dtype: 'q8',
-      device: 'wasm',
-      progress_callback: (info: { status?: string; progress?: number }) => {
-        if (typeof info.progress === 'number') {
-          status.progress = Math.round(info.progress);
-        }
-      },
-    });
+    const preferredDevice = await detectPreferredDevice();
+    let translator: unknown;
+    try {
+      translator = await pipeline('translation', modelId, {
+        dtype: 'q8',
+        device: preferredDevice,
+        progress_callback: (info: { status?: string; progress?: number }) => {
+          if (typeof info.progress === 'number') {
+            status.progress = Math.round(info.progress);
+          }
+        },
+      });
+    } catch {
+      // 若 WebGPU 初始化失敗，無縫自動降級至本機 WASM
+      translator = await pipeline('translation', modelId, {
+        dtype: 'q8',
+        device: 'wasm',
+        progress_callback: (info: { status?: string; progress?: number }) => {
+          if (typeof info.progress === 'number') {
+            status.progress = Math.round(info.progress);
+          }
+        },
+      });
+    }
 
     activePipeline = translator as unknown as TranslationPipeline;
     loadedModelId = modelId;

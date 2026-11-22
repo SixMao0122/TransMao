@@ -3,6 +3,7 @@ import { translateBatchWithFailover } from '../src/shared/engines';
 import { toTraditionalTW } from '../src/shared/opencc';
 import {
   clampPopoverPosition,
+  formatPosLabel,
   isSingleEnglishWord,
   isTranslatableEnglish,
   mapPosToZhTW,
@@ -33,10 +34,13 @@ describe('text-utils', () => {
     expect(batches.flat()).toEqual(items);
   });
 
-  it('正確對應英文詞性至繁體中文標籤', () => {
+  it('正確對應英文與中文詞性至繁體中文標籤（絕不重複顯示）', () => {
     expect(mapPosToZhTW('noun').zh).toBe('名詞');
     expect(mapPosToZhTW('verb').short).toBe('v.');
     expect(mapPosToZhTW('adjective').zh).toBe('形容詞');
+    expect(formatPosLabel('名詞')).toBe('n. 名詞');
+    expect(formatPosLabel('動詞')).toBe('v. 動詞');
+    expect(formatPosLabel('未知詞性')).toBe('未知詞性');
   });
 
   it('浮動卡片接近螢幕右側或底部時自動邊界回推與翻轉', () => {

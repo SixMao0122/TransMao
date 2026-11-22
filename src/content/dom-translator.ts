@@ -96,12 +96,13 @@ export class PageDomTranslator {
       .${BILINGUAL_CLASS} {
         display: block;
         margin: 6px 0 10px;
-        padding: 6px 11px;
-        font-size: 0.93em;
-        line-height: 1.6;
+        padding: 7px 12px;
+        font-size: 0.94em;
+        line-height: 1.62;
         color: inherit;
-        background: rgba(214, 178, 128, 0.16);
-        border-left: 3px solid #c85a32;
+        background: rgba(214, 168, 108, 0.28);
+        border: 1px solid rgba(200, 90, 50, 0.22);
+        border-left: 3.5px solid #c85a32;
         border-radius: 0 7px 7px 0;
         font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
       }
@@ -109,9 +110,9 @@ export class PageDomTranslator {
         display: inline-block;
         padding: 1px 6px;
         margin: 0 0 0 5px;
-        border-left: none;
+        border: none;
         border-radius: 4px;
-        background: rgba(214, 178, 128, 0.18);
+        background: rgba(214, 168, 108, 0.30);
       }
     `;
     document.head.appendChild(style);
@@ -154,11 +155,25 @@ export class PageDomTranslator {
   private async translateNodes(nodes: Text[]): Promise<void> {
     if (nodes.length === 0) return;
 
-    // 標記已排程避免重複處理
+    // 1. 可視區域優先排序：讓螢幕上正在閱讀的段落最先翻出來（大幅降低體感等待時間）
+    const vpHeight = window.innerHeight || 900;
+    const scoredNodes = nodes
+      .filter((n) => !this.processedNodes.has(n) && Boolean((n.nodeValue ?? '').trim()))
+      .map((node) => {
+        const rect = node.parentElement?.getBoundingClientRect();
+        const inViewport = rect ? rect.bottom >= 0 && rect.top <= vpHeight : false;
+        const dist = rect ? Math.abs(rect.top) : 99999;
+        return { node, inViewport, dist };
+      })
+      .sort((a, b) => {
+        if (a.inViewport !== b.inViewport) return a.inViewport ? -1 : 1;
+        return a.dist - b.dist;
+      });
+
     const validNodes: Text[] = [];
     const rawTexts: string[] = [];
 
-    for (const node of nodes) {
+    for (const { node } of scoredNodes) {
       if (this.processedNodes.has(node)) continue;
       const text = (node.nodeValue ?? '').trim();
       if (!text) continue;
@@ -167,7 +182,8 @@ export class PageDomTranslator {
       rawTexts.push(text);
     }
 
-    const batches = splitIntoBatches(rawTexts, 1500, 16);
+    // 2. 採用小批次漸進回傳（每批最多 6 段），無論雲端或 HF 本地模型都能邊翻邊顯示
+    const batches = splitIntoBatches(rawTexts, 900, 6);
     let offset = 0;
 
     for (const batch of batches) {
