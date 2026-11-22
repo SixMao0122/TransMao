@@ -69,16 +69,16 @@ export interface PosInfo {
 }
 
 const POS_MAP: Record<string, PosInfo> = {
-  noun: { zh: '名詞', short: 'n.', color: '#818CF8' },
-  verb: { zh: '動詞', short: 'v.', color: '#34D399' },
-  adjective: { zh: '形容詞', short: 'adj.', color: '#F472B6' },
-  adverb: { zh: '副詞', short: 'adv.', color: '#FBBF24' },
-  pronoun: { zh: '代名詞', short: 'pron.', color: '#60A5FA' },
-  preposition: { zh: '介系詞', short: 'prep.', color: '#A78BFA' },
-  conjunction: { zh: '連接詞', short: 'conj.', color: '#FB923C' },
-  interjection: { zh: '感嘆詞', short: 'interj.', color: '#F87171' },
-  determiner: { zh: '限定詞', short: 'det.', color: '#2DD4BF' },
-  exclamation: { zh: '感嘆詞', short: 'excl.', color: '#F87171' },
+  noun: { zh: '名詞', short: 'n.', color: '#3B5B8C' },
+  verb: { zh: '動詞', short: 'v.', color: '#2E6F5E' },
+  adjective: { zh: '形容詞', short: 'adj.', color: '#B4533C' },
+  adverb: { zh: '副詞', short: 'adv.', color: '#8A6A28' },
+  pronoun: { zh: '代名詞', short: 'pron.', color: '#4F6D7A' },
+  preposition: { zh: '介系詞', short: 'prep.', color: '#6B5B8C' },
+  conjunction: { zh: '連接詞', short: 'conj.', color: '#9C5A3C' },
+  interjection: { zh: '感嘆詞', short: 'interj.', color: '#A34848' },
+  determiner: { zh: '限定詞', short: 'det.', color: '#3E7368' },
+  exclamation: { zh: '感嘆詞', short: 'excl.', color: '#A34848' },
 };
 
 export function mapPosToZhTW(pos: string): PosInfo {

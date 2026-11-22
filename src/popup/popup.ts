@@ -23,11 +23,11 @@ async function getActiveTabId(): Promise<number | null> {
 function updateToggleButton(state?: PageTranslationState): void {
   if (state?.active) {
     toggleBtn.classList.add('active');
-    toggleBtn.textContent = '↩️ 還原原始英文網頁';
+    toggleBtn.textContent = '還原原始英文網頁';
     statusLine.textContent = `已翻譯 ${state.translatedCount} 個段落 · 引擎：${state.engineUsed || '運作中'}`;
   } else {
     toggleBtn.classList.remove('active');
-    toggleBtn.textContent = '🌐 翻譯整個網頁';
+    toggleBtn.textContent = '翻譯整個網頁';
   }
 }
 

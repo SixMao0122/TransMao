@@ -33,6 +33,18 @@ function copyStatic() {
       fs.copyFileSync(src, path.join(DIST, name));
     }
   }
+
+  // Copy ONNX Runtime WASM + MJS files locally so Chrome MV3 CSP allows loading them without remote CDN
+  const ortSrcDir = path.resolve('node_modules/@huggingface/transformers/dist');
+  const ortDestDir = path.join(DIST, 'ort');
+  fs.mkdirSync(ortDestDir, { recursive: true });
+  if (fs.existsSync(ortSrcDir)) {
+    for (const file of fs.readdirSync(ortSrcDir)) {
+      if (file.startsWith('ort-wasm') && (file.endsWith('.wasm') || file.endsWith('.mjs'))) {
+        fs.copyFileSync(path.join(ortSrcDir, file), path.join(ortDestDir, file));
+      }
+    }
+  }
 }
 
 const commonOptions = {

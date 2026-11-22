@@ -1,76 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" fill="none">
-  <defs>
-    <linearGradient id="heroBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0F172A"/>
-      <stop offset="50%" stop-color="#1E1B4B"/>
-      <stop offset="100%" stop-color="#311042"/>
-    </linearGradient>
-    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#818CF8"/>
-      <stop offset="50%" stop-color="#C084FC"/>
-      <stop offset="100%" stop-color="#F472B6"/>
-    </linearGradient>
-    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4F46E5"/>
-      <stop offset="55%" stop-color="#7C3AED"/>
-      <stop offset="100%" stop-color="#EC4899"/>
-    </linearGradient>
-    <radialGradient id="glow1" cx="20%" cy="30%" r="45%">
-      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="glow2" cx="85%" cy="75%" r="45%">
-      <stop offset="0%" stop-color="#EC4899" stop-opacity="0.28"/>
-      <stop offset="100%" stop-color="#EC4899" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" width="1200" height="340" fill="none">
+  <!-- Warm Paper Sketchbook Canvas -->
+  <rect x="8" y="8" width="1188" height="328" rx="22" fill="#26231F"/>
+  <rect x="2" y="2" width="1188" height="328" rx="22" fill="#FBF9F5" stroke="#26231F" stroke-width="3"/>
 
-  <!-- Canvas -->
-  <rect width="1200" height="360" rx="24" fill="url(#heroBg)"/>
-  <rect width="1200" height="360" rx="24" fill="url(#glow1)"/>
-  <rect width="1200" height="360" rx="24" fill="url(#glow2)"/>
-  <rect x="2" y="2" width="1196" height="356" rx="22" stroke="url(#accentGrad)" stroke-opacity="0.35" stroke-width="2"/>
-
-  <!-- Decorative Grid Dots -->
-  <g fill="#FFFFFF" opacity="0.06">
-    <circle cx="960" cy="60" r="3"/><circle cx="990" cy="60" r="3"/><circle cx="1020" cy="60" r="3"/><circle cx="1050" cy="60" r="3"/><circle cx="1080" cy="60" r="3"/><circle cx="1110" cy="60" r="3"/>
-    <circle cx="960" cy="90" r="3"/><circle cx="990" cy="90" r="3"/><circle cx="1020" cy="90" r="3"/><circle cx="1050" cy="90" r="3"/><circle cx="1080" cy="90" r="3"/><circle cx="1110" cy="90" r="3"/>
-    <circle cx="960" cy="120" r="3"/><circle cx="990" cy="120" r="3"/><circle cx="1020" cy="120" r="3"/><circle cx="1050" cy="120" r="3"/><circle cx="1080" cy="120" r="3"/><circle cx="1110" cy="120" r="3"/>
+  <!-- Subtle Notebook Dot Grid -->
+  <g fill="#D5CDC0" opacity="0.65">
+    <circle cx="960" cy="54" r="2.5"/><circle cx="990" cy="54" r="2.5"/><circle cx="1020" cy="54" r="2.5"/><circle cx="1050" cy="54" r="2.5"/><circle cx="1080" cy="54" r="2.5"/><circle cx="1110" cy="54" r="2.5"/>
+    <circle cx="960" cy="84" r="2.5"/><circle cx="990" cy="84" r="2.5"/><circle cx="1020" cy="84" r="2.5"/><circle cx="1050" cy="84" r="2.5"/><circle cx="1080" cy="84" r="2.5"/><circle cx="1110" cy="84" r="2.5"/>
+    <circle cx="960" cy="114" r="2.5"/><circle cx="990" cy="114" r="2.5"/><circle cx="1020" cy="114" r="2.5"/><circle cx="1050" cy="114" r="2.5"/><circle cx="1080" cy="114" r="2.5"/><circle cx="1110" cy="114" r="2.5"/>
   </g>
 
-  <!-- Left Logo Emblem -->
-  <g transform="translate(88, 76)">
-    <rect x="0" y="0" width="208" height="208" rx="52" fill="url(#logoGrad)"/>
-    <rect x="5" y="5" width="198" height="198" rx="47" stroke="white" stroke-opacity="0.25" stroke-width="2"/>
-    <path d="M46 94 L40 46 C39 40 45 36 50 40 L82 63 C89 60 96 59 104 59 C112 59 119 60 126 63 L158 40 C163 36 169 40 168 46 L162 94 C169 104 172 116 172 128 C172 158 144 178 104 178 C64 178 36 158 36 128 C36 116 39 104 46 94 Z" fill="#FFFFFF"/>
-    <path d="M51 82 L49 54 L73 71 Z" fill="#F472B6" opacity="0.8"/>
-    <path d="M157 82 L159 54 L135 71 Z" fill="#F472B6" opacity="0.8"/>
-    <text x="104" y="138" text-anchor="middle" font-family="'Noto Sans TC', 'Microsoft JhengHei', sans-serif" font-weight="900" font-size="70" fill="url(#logoGrad)">譯</text>
+  <!-- Left Hand-Drawn Cat Stamp -->
+  <g transform="translate(82, 62)">
+    <rect x="8" y="8" width="196" height="196" rx="40" fill="#26231F"/>
+    <rect x="0" y="0" width="196" height="196" rx="40" fill="#FFFFFF" stroke="#26231F" stroke-width="4.5"/>
+    <path d="M40 94 L37 46 C37 40 44 37 49 41 L78 63 C85 60 91 59 98 59 C105 59 111 60 118 63 L147 41 C152 37 159 40 159 46 L156 94 C162 103 165 114 165 125 C165 153 137 170 98 170 C59 170 31 153 31 125 C31 114 34 103 40 94 Z" fill="#C85A32" stroke="#26231F" stroke-width="4.5" stroke-linejoin="round"/>
+    <path d="M48 79 L47 54 L68 69 Z" fill="#F0DFC8"/>
+    <path d="M148 79 L149 54 L128 69 Z" fill="#F0DFC8"/>
+    <circle cx="74" cy="116" r="7" fill="#26231F"/>
+    <circle cx="122" cy="116" r="7" fill="#26231F"/>
+    <path d="M93 126 L103 126 L98 133 Z" fill="#FBF9F5"/>
+    <path d="M87 139 Q98 146 109 139" stroke="#FBF9F5" stroke-width="3.5" stroke-linecap="round"/>
   </g>
 
   <!-- Right Typography -->
-  <g transform="translate(348, 108)">
-    <text x="0" y="34" font-family="'Segoe UI', 'Inter', system-ui, sans-serif" font-weight="800" font-size="68" fill="#FFFFFF" letter-spacing="-1.5">Trans<tspan fill="url(#accentGrad)">Mao</tspan></text>
-    <rect x="356" y="-8" width="112" height="34" rx="17" fill="#4F46E5" fill-opacity="0.35" stroke="#818CF8" stroke-width="1.5"/>
-    <text x="412" y="14" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-weight="700" font-size="14" fill="#E0E7FF">v0.1.0 · zh-TW</text>
+  <g transform="translate(334, 92)">
+    <text x="0" y="34" font-family="'Noto Sans TC', 'Segoe UI', sans-serif" font-weight="900" font-size="62" fill="#1F1D1A" letter-spacing="-1">Trans<tspan fill="#C85A32">Mao</tspan></text>
+    <rect x="336" y="-8" width="110" height="32" rx="8" fill="#F3ECE0" stroke="#26231F" stroke-width="1.5"/>
+    <text x="391" y="13" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700" font-size="13" fill="#1F1D1A">v0.1.0 · zh-TW</text>
 
-    <text x="2" y="84" font-family="'Noto Sans TC', 'Microsoft JhengHei', sans-serif" font-weight="500" font-size="24" fill="#CBD5E1">專為繁體中文打造的抗失效網頁翻譯 × 反白沉浸式查詞擴充套件</text>
+    <text x="2" y="84" font-family="'Noto Sans TC', 'Microsoft JhengHei', sans-serif" font-weight="600" font-size="22" fill="#57524A">專為繁體中文打造的抗失效網頁翻譯與反白查詞套件</text>
 
-    <!-- Feature Pills -->
-    <g transform="translate(0, 118)">
-      <rect x="0" y="0" width="152" height="38" rx="19" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.16"/>
-      <text x="76" y="24" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-size="14" font-weight="600" fill="#E2E8F0">🌐 全頁雙語翻譯</text>
+    <!-- Stationery Tags (Zero Emojis) -->
+    <g transform="translate(0, 114)">
+      <rect x="0" y="0" width="142" height="36" rx="8" fill="#FFFFFF" stroke="#26231F" stroke-width="1.5"/>
+      <text x="71" y="23" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-size="13.5" font-weight="700" fill="#1F1D1A">全頁雙語底色對照</text>
 
-      <rect x="166" y="0" width="166" height="38" rx="19" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.16"/>
-      <text x="249" y="24" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-size="14" font-weight="600" fill="#E2E8F0">✨ 反白詞性與例句</text>
+      <rect x="156" y="0" width="146" height="36" rx="8" fill="#FFFFFF" stroke="#26231F" stroke-width="1.5"/>
+      <text x="229" y="23" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-size="13.5" font-weight="700" fill="#1F1D1A">反白詞性與例句</text>
 
-      <rect x="346" y="0" width="144" height="38" rx="19" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.16"/>
-      <text x="418" y="24" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-size="14" font-weight="600" fill="#E2E8F0">🔊 真人語音發音</text>
+      <rect x="316" y="0" width="136" height="36" rx="8" fill="#FFFFFF" stroke="#26231F" stroke-width="1.5"/>
+      <text x="384" y="23" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-size="13.5" font-weight="700" fill="#1F1D1A">美英雙音發音</text>
 
-      <rect x="504" y="0" width="194" height="38" rx="19" fill="#EC4899" fill-opacity="0.18" stroke="#F472B6" stroke-opacity="0.45"/>
-      <text x="601" y="24" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-size="14" font-weight="600" fill="#FCE7F3">🤗 HF 本地超小模型支援</text>
+      <rect x="466" y="0" width="182" height="36" rx="8" fill="#C85A32" stroke="#26231F" stroke-width="1.5"/>
+      <text x="557" y="23" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-size="13.5" font-weight="700" fill="#FBF9F5">HF 本地離線超小模型</text>
     </g>
 
-    <text x="2" y="196" font-family="'Segoe UI', monospace" font-size="14" fill="#94A3B8">Open Source · Apache-2.0 License · Crafted by SxiMao (@SixMao0122)</text>
+    <text x="2" y="192" font-family="'Noto Sans TC', sans-serif" font-size="13.5" fill="#787166">Apache-2.0 Open Source · 作者: SxiMao (@SixMao0122)</text>
   </g>
 </svg>

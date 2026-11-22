@@ -3,10 +3,16 @@ import { BoxRect, clampPopoverPosition, mapPosToZhTW } from '../shared/text-util
 import { DictionaryResult } from '../shared/types';
 import { speakWord, stopSpeaking } from './audio';
 
+const SVG_SPEAKER = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+const SVG_CLOSE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+const SVG_BOOKMARK = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+const SVG_BOOKMARK_FILLED = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+const SVG_COPY = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+
 const POPOVER_CSS = `
   :host {
     all: initial;
-    font-family: 'Segoe UI', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', -apple-system, sans-serif;
   }
 
   * {
@@ -18,25 +24,26 @@ const POPOVER_CSS = `
     z-index: 2147483647;
     width: 34px;
     height: 34px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(255, 255, 255, 0.35);
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #ec4899 100%);
-    color: #ffffff;
+    border-radius: 10px;
+    border: 1.5px solid #26231f;
+    background: #c85a32;
+    color: #fbf9f5;
     font-weight: 800;
     font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.45);
-    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease;
-    animation: tmPopIn 0.16s ease-out;
+    box-shadow: 2.5px 2.5px 0 #26231f;
+    transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    animation: tmPopIn 0.14s ease-out;
     user-select: none;
   }
 
   .tm-icon-btn:hover {
-    transform: scale(1.12);
-    box-shadow: 0 10px 26px rgba(236, 72, 153, 0.55);
+    background: #b24b26;
+    transform: translate(-1px, -1px);
+    box-shadow: 3.5px 3.5px 0 #26231f;
   }
 
   .tm-card {
@@ -47,22 +54,13 @@ const POPOVER_CSS = `
     max-height: 440px;
     display: flex;
     flex-direction: column;
-    border-radius: 16px;
-    background: rgba(15, 23, 42, 0.96);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    box-shadow: 0 22px 48px rgba(2, 6, 23, 0.62);
-    color: #f8fafc;
+    border-radius: 14px;
+    background: #fbf9f5;
+    border: 1.5px solid #26231f;
+    box-shadow: 5px 5px 0 rgba(38, 35, 31, 0.9);
+    color: #1f1d1a;
     overflow: hidden;
-    animation: tmPopIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .tm-accent-bar {
-    height: 3.5px;
-    width: 100%;
-    background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
-    flex-shrink: 0;
+    animation: tmPopIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .tm-header {
@@ -71,46 +69,48 @@ const POPOVER_CSS = `
     align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
+    border-bottom: 1px dashed #d8d1c5;
   }
 
   .tm-word {
     font-size: 20px;
     font-weight: 800;
-    color: #ffffff;
+    color: #1f1d1a;
     line-height: 1.25;
     word-break: break-word;
+    letter-spacing: -0.2px;
   }
 
   .tm-phonetic {
     font-family: ui-monospace, 'Cascadia Code', monospace;
     font-size: 12.5px;
-    color: #94a3b8;
+    color: #6b655b;
     margin-top: 3px;
   }
 
   .tm-close {
-    background: rgba(255, 255, 255, 0.08);
-    border: none;
-    color: #cbd5e1;
+    background: #f2ece1;
+    border: 1px solid #d8d1c5;
+    color: #57524a;
     width: 26px;
     height: 26px;
-    border-radius: 8px;
+    border-radius: 7px;
     cursor: pointer;
-    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.14s, color 0.14s, border-color 0.14s;
   }
 
   .tm-close:hover {
-    background: rgba(248, 113, 113, 0.2);
-    color: #fca5a5;
+    background: #fae8e2;
+    border-color: #c85a32;
+    color: #c85a32;
   }
 
   .tm-audio-row {
-    padding: 0 16px 10px;
+    padding: 10px 16px 8px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -122,69 +122,52 @@ const POPOVER_CSS = `
     gap: 5px;
     padding: 4px 11px;
     border-radius: 999px;
-    border: 1px solid rgba(129, 140, 248, 0.35);
-    background: rgba(79, 70, 229, 0.22);
-    color: #e0e7ff;
+    border: 1px solid #26231f;
+    background: #ffffff;
+    color: #1f1d1a;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, transform 0.12s;
+    box-shadow: 1.5px 1.5px 0 #26231f;
+    transition: transform 0.12s, background 0.12s, color 0.12s;
   }
 
   .tm-audio-btn:hover {
-    background: rgba(99, 102, 241, 0.42);
-    transform: translateY(-1px);
-  }
-
-  .tm-audio-btn.uk {
-    border-color: rgba(148, 163, 184, 0.3);
-    background: rgba(51, 65, 85, 0.55);
-    color: #cbd5e1;
-  }
-
-  .tm-audio-btn.uk:hover {
-    background: rgba(71, 85, 105, 0.75);
+    background: #f5efe6;
+    transform: translate(-0.5px, -0.5px);
   }
 
   .tm-audio-btn.speaking {
-    border-color: #f472b6;
-    background: rgba(236, 72, 153, 0.28);
-    color: #fce7f3;
-    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
-  }
-
-  .tm-ex-mark {
-    background: rgba(129, 140, 248, 0.28);
-    color: #e0e7ff;
-    padding: 0 3px;
-    border-radius: 4px;
-    font-weight: 700;
+    background: #c85a32;
+    border-color: #26231f;
+    color: #fbf9f5;
   }
 
   .tm-body {
-    padding: 0 16px 14px;
+    padding: 4px 16px 14px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 11px;
   }
 
   .tm-body::-webkit-scrollbar {
     width: 6px;
   }
   .tm-body::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.3);
+    background: #d5cdc0;
     border-radius: 999px;
   }
 
   .tm-primary-box {
-    background: rgba(30, 41, 59, 0.85);
-    border: 1px solid rgba(244, 114, 182, 0.28);
-    border-radius: 10px;
-    padding: 10px 12px;
+    background: #f3ece0;
+    border: 1px solid #dfd6c7;
+    border-left: 3.5px solid #c85a32;
+    border-radius: 8px;
+    padding: 9px 12px;
     font-size: 16px;
     font-weight: 700;
-    color: #f9a8d4;
+    color: #1f1d1a;
     line-height: 1.45;
   }
 
@@ -198,15 +181,15 @@ const POPOVER_CSS = `
     display: inline-flex;
     align-self: flex-start;
     padding: 2px 8px;
-    border-radius: 6px;
+    border-radius: 5px;
     font-size: 11.5px;
     font-weight: 700;
     letter-spacing: 0.2px;
   }
 
   .tm-def-item {
-    padding-left: 8px;
-    border-left: 2px solid rgba(148, 163, 184, 0.25);
+    padding-left: 9px;
+    border-left: 2px solid #dfd6c7;
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -214,89 +197,101 @@ const POPOVER_CSS = `
 
   .tm-def-zh {
     font-size: 13.5px;
-    color: #f1f5f9;
+    color: #1f1d1a;
+    font-weight: 600;
     line-height: 1.45;
   }
 
   .tm-def-en {
     font-size: 12px;
-    color: #94a3b8;
-    line-height: 1.4;
+    color: #6b655b;
+    line-height: 1.45;
   }
 
   .tm-example {
     margin-top: 4px;
     padding: 7px 10px;
     border-radius: 8px;
-    background: rgba(2, 6, 23, 0.55);
-    border: 1px solid rgba(51, 65, 85, 0.7);
+    background: #ffffff;
+    border: 1px solid #e4ddd1;
     font-size: 12px;
-    line-height: 1.45;
+    line-height: 1.5;
   }
 
   .tm-example-en {
-    color: #cbd5e1;
+    color: #2c2925;
   }
 
   .tm-example-zh {
-    color: #94a3b8;
-    margin-top: 2px;
+    color: #6b655b;
+    margin-top: 3px;
+  }
+
+  .tm-ex-mark {
+    background: #f9e2d2;
+    color: #9a3b1a;
+    padding: 0 3px;
+    border-radius: 3px;
+    font-weight: 700;
   }
 
   .tm-footer {
     padding: 9px 16px;
-    border-top: 1px solid rgba(51, 65, 85, 0.65);
-    background: rgba(2, 6, 23, 0.35);
+    border-top: 1px dashed #d8d1c5;
+    background: #f5efe6;
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 11.5px;
-    color: #64748b;
+    color: #787166;
     flex-shrink: 0;
   }
 
   .tm-footer-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
   }
 
   .tm-action-btn {
-    background: transparent;
-    border: 1px solid rgba(148, 163, 184, 0.25);
-    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ffffff;
+    border: 1px solid #c9c0b1;
+    color: #3a3630;
     border-radius: 7px;
     padding: 3px 9px;
     font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.14s;
   }
 
   .tm-action-btn:hover {
-    border-color: #818cf8;
-    color: #e0e7ff;
+    border-color: #26231f;
+    color: #1f1d1a;
   }
 
   .tm-action-btn.saved {
-    background: rgba(250, 204, 21, 0.16);
-    border-color: rgba(250, 204, 21, 0.55);
-    color: #fde047;
+    background: #c85a32;
+    border-color: #26231f;
+    color: #fbf9f5;
   }
 
   .tm-loading {
-    padding: 18px 16px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 9px;
   }
 
   .tm-shimmer {
-    height: 14px;
+    height: 13px;
     border-radius: 6px;
-    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background: linear-gradient(90deg, #ede6da 25%, #e2d9c9 50%, #ede6da 75%);
     background-size: 200% 100%;
-    animation: tmShimmer 1.2s infinite linear;
+    animation: tmShimmer 1s infinite linear;
   }
 
   .tm-toast {
@@ -305,18 +300,18 @@ const POPOVER_CSS = `
     bottom: 20px;
     z-index: 2147483647;
     padding: 10px 16px;
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.94);
-    border: 1px solid rgba(129, 140, 248, 0.45);
-    color: #f8fafc;
+    border-radius: 10px;
+    background: #fbf9f5;
+    border: 1.5px solid #26231f;
+    color: #1f1d1a;
     font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 12px 28px rgba(2, 6, 23, 0.55);
-    animation: tmPopIn 0.2s ease-out;
+    box-shadow: 3px 3px 0 #26231f;
+    animation: tmPopIn 0.16s ease-out;
   }
 
   @keyframes tmPopIn {
-    from { opacity: 0; transform: translateY(6px) scale(0.96); }
+    from { opacity: 0; transform: translateY(5px) scale(0.97); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
@@ -394,7 +389,7 @@ export class TransMaoPopover {
     this.hideIcon();
     this.hideCard();
     const shadow = this.ensureShadow();
-    const pos = clampPopoverPosition(anchor, 368, 220, window.innerWidth, window.innerHeight);
+    const pos = clampPopoverPosition(anchor, 368, 190, window.innerWidth, window.innerHeight);
 
     const card = document.createElement('div');
     card.className = 'tm-card';
@@ -402,18 +397,17 @@ export class TransMaoPopover {
     card.style.top = `${pos.y}px`;
 
     card.innerHTML = `
-      <div class="tm-accent-bar"></div>
       <div class="tm-header">
         <div>
           <div class="tm-word">${escapeHtml(word)}</div>
-          <div class="tm-phonetic">TransMao 正在查詢繁中釋義與例句...</div>
+          <div class="tm-phonetic">查詢繁中釋義與例句中...</div>
         </div>
-        <button class="tm-close" title="關閉 (Esc)">✕</button>
+        <button class="tm-close" title="關閉 (Esc)">${SVG_CLOSE}</button>
       </div>
       <div class="tm-loading">
-        <div class="tm-shimmer" style="width: 72%; height: 22px;"></div>
-        <div class="tm-shimmer" style="width: 92%;"></div>
-        <div class="tm-shimmer" style="width: 84%;"></div>
+        <div class="tm-shimmer" style="width: 68%; height: 22px;"></div>
+        <div class="tm-shimmer" style="width: 90%;"></div>
+        <div class="tm-shimmer" style="width: 78%;"></div>
       </div>
     `;
 
@@ -426,7 +420,7 @@ export class TransMaoPopover {
     this.hideIcon();
     this.hideCard();
     const shadow = this.ensureShadow();
-    const pos = clampPopoverPosition(anchor, 368, 360, window.innerWidth, window.innerHeight);
+    const pos = clampPopoverPosition(anchor, 368, 340, window.innerWidth, window.innerHeight);
     const saved = await isWordSaved(result.word);
 
     const card = document.createElement('div');
@@ -442,12 +436,12 @@ export class TransMaoPopover {
             (d) => `
             <div class="tm-def-item">
               <div class="tm-def-zh">${escapeHtml(d.zh)}</div>
-              <div class="tm-def-en">${escapeHtml(d.en)}</div>
+              ${d.en ? `<div class="tm-def-en">${escapeHtml(d.en)}</div>` : ''}
               ${
                 d.example
                   ? `<div class="tm-example">
                        <div class="tm-example-en">“${highlightWordInSentence(d.example.en, result.word)}”</div>
-                       <div class="tm-example-zh">${escapeHtml(d.example.zh)}</div>
+                       ${d.example.zh ? `<div class="tm-example-zh">${escapeHtml(d.example.zh)}</div>` : ''}
                      </div>`
                   : ''
               }
@@ -457,7 +451,7 @@ export class TransMaoPopover {
 
         return `
           <div class="tm-meaning">
-            <span class="tm-pos-pill" style="background: ${posMeta.color}24; color: ${posMeta.color}; border: 1px solid ${posMeta.color}55;">
+            <span class="tm-pos-pill" style="background: ${posMeta.color}18; color: ${posMeta.color}; border: 1px solid ${posMeta.color}45;">
               ${escapeHtml(m.partOfSpeechZh)}
             </span>
             ${defsHtml}
@@ -467,17 +461,16 @@ export class TransMaoPopover {
       .join('');
 
     card.innerHTML = `
-      <div class="tm-accent-bar"></div>
       <div class="tm-header">
         <div>
           <div class="tm-word">${escapeHtml(result.word)}</div>
           ${result.phonetic ? `<div class="tm-phonetic">${escapeHtml(result.phonetic)}</div>` : ''}
         </div>
-        <button class="tm-close" title="關閉 (Esc)">✕</button>
+        <button class="tm-close" title="關閉 (Esc)">${SVG_CLOSE}</button>
       </div>
       <div class="tm-audio-row">
-        <button class="tm-audio-btn us" title="美式發音">🔊 美音</button>
-        <button class="tm-audio-btn uk" title="英式發音">🔊 英音</button>
+        <button class="tm-audio-btn us" title="美式發音">${SVG_SPEAKER}<span>美音 US</span></button>
+        <button class="tm-audio-btn uk" title="英式發音">${SVG_SPEAKER}<span>英音 UK</span></button>
       </div>
       <div class="tm-body">
         <div class="tm-primary-box">${escapeHtml(result.translation)}</div>
@@ -486,8 +479,10 @@ export class TransMaoPopover {
       <div class="tm-footer">
         <span>TransMao · ${escapeHtml(result.engineUsed)}</span>
         <div class="tm-footer-actions">
-          <button class="tm-action-btn copy-btn">複製</button>
-          <button class="tm-action-btn save-btn ${saved ? 'saved' : ''}">${saved ? '★ 已收藏' : '☆ 收藏'}</button>
+          <button class="tm-action-btn copy-btn">${SVG_COPY}<span>複製</span></button>
+          <button class="tm-action-btn save-btn ${saved ? 'saved' : ''}">
+            ${saved ? SVG_BOOKMARK_FILLED : SVG_BOOKMARK}<span>${saved ? '已收藏' : '收藏'}</span>
+          </button>
         </div>
       </div>
     `;
@@ -512,8 +507,11 @@ export class TransMaoPopover {
     copyBtn?.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(`${result.word} — ${result.translation}`);
-        copyBtn.textContent = '已複製 ✓';
-        setTimeout(() => (copyBtn.textContent = '複製'), 1400);
+        const label = copyBtn.querySelector('span');
+        if (label) {
+          label.textContent = '已複製';
+          setTimeout(() => (label.textContent = '複製'), 1400);
+        }
       } catch {
         // 忽略剪貼簿權限錯誤
       }
@@ -533,13 +531,12 @@ export class TransMaoPopover {
         savedAt: Date.now(),
       });
       saveBtn.classList.toggle('saved', nowSaved);
-      saveBtn.textContent = nowSaved ? '★ 已收藏' : '☆ 收藏';
+      saveBtn.innerHTML = `${nowSaved ? SVG_BOOKMARK_FILLED : SVG_BOOKMARK}<span>${nowSaved ? '已收藏' : '收藏'}</span>`;
     });
 
     shadow.appendChild(card);
     this.cardEl = card;
 
-    // 視窗渲染後再次微調高度邊界，防止長卡片溢出底部
     const actualRect = card.getBoundingClientRect();
     const refined = clampPopoverPosition(
       anchor,
@@ -567,12 +564,11 @@ export class TransMaoPopover {
     card.style.left = `${pos.x}px`;
     card.style.top = `${pos.y}px`;
     card.innerHTML = `
-      <div class="tm-accent-bar"></div>
       <div class="tm-header">
         <div class="tm-word">${escapeHtml(word)}</div>
-        <button class="tm-close">✕</button>
+        <button class="tm-close">${SVG_CLOSE}</button>
       </div>
-      <div class="tm-body" style="color: #fca5a5; font-size: 13px;">
+      <div class="tm-body" style="color: #b24b26; font-size: 13px; padding-top: 10px;">
         查詢暫時失敗：${escapeHtml(message)}
       </div>
     `;
@@ -581,7 +577,7 @@ export class TransMaoPopover {
     this.cardEl = card;
   }
 
-  public showToast(message: string, durationMs = 2600): void {
+  public showToast(message: string, durationMs = 2400): void {
     const shadow = this.ensureShadow();
     if (this.toastEl) this.toastEl.remove();
     if (this.toastTimer) window.clearTimeout(this.toastTimer);

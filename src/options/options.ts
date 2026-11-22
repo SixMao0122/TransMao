@@ -7,6 +7,9 @@ import {
 } from '../shared/storage';
 import { HfModelId, HfModelStatus, RuntimeMessage } from '../shared/types';
 
+const SVG_SPEAKER = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
+const SVG_TRASH = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>`;
+
 const hfModelEl = document.getElementById('hfModel') as HTMLSelectElement;
 const hfStatusText = document.getElementById('hfStatusText') as HTMLDivElement;
 const hfProgressBar = document.getElementById('hfProgressBar') as HTMLDivElement;
@@ -32,7 +35,7 @@ async function renderVocab(): Promise<void> {
   vocabCount.textContent = String(list.length);
   if (list.length === 0) {
     vocabListEl.innerHTML =
-      '<div style="color: #64748b; font-size: 13px;">尚未收藏任何單字，在網頁反白英文單字並點擊「☆ 收藏」即可加入這裡。</div>';
+      '<div style="color: #787166; font-size: 13px;">尚未收藏任何單字，在網頁反白英文單字並點擊「收藏」即可加入這裡。</div>';
     return;
   }
 
@@ -42,13 +45,13 @@ async function renderVocab(): Promise<void> {
     row.className = 'vocab-item';
     row.innerHTML = `
       <div>
-        <div class="vocab-word">${escapeHtml(item.word)} <span style="font-size:12px;color:#94a3b8;font-weight:400;">${escapeHtml(item.phonetic || '')}</span></div>
+        <div class="vocab-word">${escapeHtml(item.word)}<span class="vocab-phonetic">${escapeHtml(item.phonetic || '')}</span></div>
         <div class="vocab-zh">${item.partOfSpeech ? `[${escapeHtml(item.partOfSpeech)}] ` : ''}${escapeHtml(item.translation)}</div>
         ${item.exampleEn ? `<div class="vocab-ex">“${escapeHtml(item.exampleEn)}”<br/>${escapeHtml(item.exampleZh || '')}</div>` : ''}
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;">
-        <button class="btn btn-secondary speak-btn" title="朗讀">🔊</button>
-        <button class="btn btn-secondary del-btn" title="移除">🗑️</button>
+        <button class="btn btn-secondary icon-btn speak-btn" title="朗讀">${SVG_SPEAKER}</button>
+        <button class="btn btn-secondary icon-btn del-btn" title="移除">${SVG_TRASH}</button>
       </div>
     `;
 
@@ -110,12 +113,12 @@ saveBtn.addEventListener('click', async () => {
     autoSpeak: autoSpeakEl.checked,
     blacklistDomains: domains,
   });
-  flashMessage('✓ 設定已儲存');
+  flashMessage('設定已儲存');
 });
 
 clearCacheBtn.addEventListener('click', async () => {
   await clearTranslationCache();
-  flashMessage('✓ 已清除本地翻譯快取');
+  flashMessage('已清除本地翻譯快取');
 });
 
 preloadHfBtn.addEventListener('click', async () => {
@@ -132,7 +135,7 @@ preloadHfBtn.addEventListener('click', async () => {
     } satisfies RuntimeMessage)) as { ok: boolean; error?: string };
     if (res?.ok) {
       hfProgressBar.style.width = '100%';
-      hfStatusText.textContent = `✓ 本地模型 ${modelId} 載入完成，現在可於離線模式使用！`;
+      hfStatusText.textContent = `本地模型 ${modelId} 載入完成，現在可於離線模式使用`;
     } else {
       hfStatusText.textContent = `載入失敗：${res?.error || '未知錯誤'}`;
     }

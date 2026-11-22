@@ -43,8 +43,7 @@
     "https://api.mymemory.translated.net/*",
     "https://api.dictionaryapi.dev/*",
     "https://huggingface.co/*",
-    "https://*.hf.co/*",
-    "https://cdn.jsdelivr.net/*"
+    "https://*.hf.co/*"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"

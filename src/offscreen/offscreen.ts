@@ -2,9 +2,14 @@ import { env, pipeline } from '@huggingface/transformers';
 import { toTraditionalTW } from '../shared/opencc';
 import { HfModelId, HfModelStatus, RuntimeMessage } from '../shared/types';
 
-// 設定瀏覽器端執行環境：使用瀏覽器 Cache API 保存模型權重，避免重複下載
+// 設定瀏覽器端執行環境：使用本機擴充套件內建的 ORT WASM（符合 Chrome MV3 CSP，絕不從遠端 CDN 載入可執行腳本）
 env.allowLocalModels = false;
 env.useBrowserCache = true;
+if (env.backends?.onnx?.wasm) {
+  env.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL('ort/');
+  env.backends.onnx.wasm.numThreads = 1;
+  env.backends.onnx.wasm.proxy = false;
+}
 
 type TranslationPipeline = (
   input: string | string[],

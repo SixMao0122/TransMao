@@ -1,74 +1,70 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 420" width="920" height="420" fill="none">
-  <defs>
-    <linearGradient id="cardAccent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#6366F1"/>
-      <stop offset="100%" stop-color="#EC4899"/>
-    </linearGradient>
-    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="125%">
-      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0F172A" flood-opacity="0.45"/>
-    </filter>
-  </defs>
+  <!-- Simulated Clean Webpage -->
+  <rect width="920" height="420" rx="16" fill="#FFFFFF" stroke="#26231F" stroke-width="2"/>
+  <rect width="920" height="42" rx="16" fill="#F3ECE0"/>
+  <rect y="26" width="920" height="16" fill="#F3ECE0"/>
+  <line x1="0" y1="42" x2="920" y2="42" stroke="#D8D1C5" stroke-width="1.5"/>
+  <circle cx="24" cy="21" r="5.5" fill="#C85A32"/>
+  <circle cx="42" cy="21" r="5.5" fill="#D4A359"/>
+  <circle cx="60" cy="21" r="5.5" fill="#2E6F5E"/>
+  <rect x="96" y="10" width="360" height="22" rx="6" fill="#FFFFFF" stroke="#D8D1C5"/>
+  <text x="112" y="25" font-family="ui-monospace, monospace" font-size="11.5" fill="#6B655B">https://docs.example.org/engineering</text>
 
-  <!-- Simulated Webpage Background -->
-  <rect width="920" height="420" rx="18" fill="#0F172A"/>
-  <!-- Browser Top Bar -->
-  <rect width="920" height="44" rx="18" fill="#1E293B"/>
-  <rect y="26" width="920" height="18" fill="#1E293B"/>
-  <circle cx="24" cy="22" r="6" fill="#EF4444"/>
-  <circle cx="44" cy="22" r="6" fill="#F59E0B"/>
-  <circle cx="64" cy="22" r="6" fill="#10B981"/>
-  <rect x="110" y="10" width="380" height="24" rx="12" fill="#0F172A"/>
-  <text x="128" y="26" font-family="'Segoe UI', monospace" font-size="12" fill="#94A3B8">https://developer.mozilla.org/en-US/docs/Web</text>
+  <!-- Webpage English + Warm Tinted Bilingual Block -->
+  <text x="44" y="96" font-family="'Segoe UI', sans-serif" font-weight="700" font-size="20" fill="#1F1D1A">Discovering</text>
+  <rect x="160" y="73" width="122" height="30" rx="5" fill="#F9E2D2" stroke="#C85A32"/>
+  <text x="168" y="96" font-family="'Segoe UI', sans-serif" font-weight="700" font-size="20" fill="#9A3B1A">serendipity</text>
+  <text x="292" y="96" font-family="'Segoe UI', sans-serif" font-weight="700" font-size="20" fill="#1F1D1A">in web tools</text>
 
-  <!-- Simulated Article Content (Bilingual Mode) -->
-  <text x="48" y="96" font-family="'Segoe UI', sans-serif" font-weight="700" font-size="22" fill="#F8FAFC">Discovering</text>
-  <!-- Highlighted Word -->
-  <rect x="176" y="72" width="134" height="32" rx="6" fill="#6366F1" fill-opacity="0.45" stroke="#818CF8"/>
-  <text x="184" y="96" font-family="'Segoe UI', sans-serif" font-weight="700" font-size="22" fill="#FFFFFF">serendipity</text>
-  <text x="320" y="96" font-family="'Segoe UI', sans-serif" font-weight="700" font-size="22" fill="#F8FAFC">in modern web engineering</text>
+  <!-- Warm Bilingual Highlight Block -->
+  <rect x="44" y="112" width="346" height="36" rx="6" fill="#D6B280" fill-opacity="0.2"/>
+  <rect x="44" y="112" width="3.5" height="36" fill="#C85A32"/>
+  <text x="58" y="135" font-family="'Noto Sans TC', sans-serif" font-size="14.5" fill="#3A3630">在網頁工具中發現意外的驚喜收穫</text>
 
-  <text x="48" y="128" font-family="'Noto Sans TC', sans-serif" font-size="16" fill="#A5B4FC">在現代網頁工程中探索意外的驚喜發現</text>
+  <text x="44" y="182" font-family="'Segoe UI', sans-serif" font-size="14" fill="#57524A">Resilient workflows never break when APIs fail.</text>
+  <rect x="44" y="194" width="346" height="34" rx="6" fill="#D6B280" fill-opacity="0.2"/>
+  <rect x="44" y="194" width="3.5" height="34" fill="#C85A32"/>
+  <text x="58" y="216" font-family="'Noto Sans TC', sans-serif" font-size="13.5" fill="#3A3630">具備韌性的流程在 API 失效時絕不中斷。</text>
 
-  <text x="48" y="176" font-family="'Segoe UI', sans-serif" font-size="15" fill="#94A3B8">Building resilient tools means your translation workflow never breaks when a remote API fails.</text>
-  <text x="48" y="202" font-family="'Noto Sans TC', sans-serif" font-size="14" fill="#64748B">打造具韌性的工具，意味著當遠端 API 失效時，您的翻譯工作流程永遠不會中斷。</text>
+  <!-- Floating Seal Stamp Button -->
+  <rect x="292" y="50" width="28" height="28" rx="7" fill="#26231F"/>
+  <rect x="290" y="48" width="28" height="28" rx="7" fill="#C85A32" stroke="#26231F" stroke-width="1.5"/>
+  <text x="304" y="67" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="800" font-size="13" fill="#FBF9F5">譯</text>
 
-  <!-- Floating Cat Icon next to Highlight -->
-  <circle cx="328" cy="64" r="16" fill="url(#cardAccent)"/>
-  <text x="328" y="70" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="800" font-size="14" fill="#FFFFFF">譯</text>
+  <!-- Hand-Drawn Paper Dictionary Card -->
+  <g transform="translate(428, 62)">
+    <rect x="6" y="6" width="448" height="320" rx="14" fill="#26231F"/>
+    <rect width="448" height="320" rx="14" fill="#FBF9F5" stroke="#26231F" stroke-width="2"/>
 
-  <!-- TransMao Floating Dictionary Card -->
-  <g transform="translate(420, 68)" filter="url(#cardShadow)">
-    <rect width="456" height="316" rx="18" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
-    <rect width="456" height="4" rx="2" fill="url(#cardAccent)"/>
+    <text x="22" y="38" font-family="'Segoe UI', sans-serif" font-weight="800" font-size="22" fill="#1F1D1A">serendipity</text>
+    <text x="22" y="59" font-family="ui-monospace, monospace" font-size="12.5" fill="#6B655B">/ˌser.ənˈdɪp.ə.ti/</text>
+    <line x1="0" y1="72" x2="448" y2="72" stroke="#D8D1C5" stroke-dasharray="4 4"/>
 
-    <!-- Card Header -->
-    <text x="24" y="42" font-family="'Segoe UI', sans-serif" font-weight="800" font-size="24" fill="#FFFFFF">serendipity</text>
-    <text x="24" y="66" font-family="'Segoe UI', monospace" font-size="13" fill="#94A3B8">/ˌser.ənˈdɪp.ə.ti/</text>
+    <!-- Audio Pills -->
+    <rect x="22" y="84" width="84" height="26" rx="13" fill="#FFFFFF" stroke="#26231F" stroke-width="1.2"/>
+    <text x="64" y="101" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="700" font-size="11.5" fill="#1F1D1A">美音 US</text>
+    <rect x="114" y="84" width="84" height="26" rx="13" fill="#FFFFFF" stroke="#26231F" stroke-width="1.2"/>
+    <text x="156" y="101" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="700" font-size="11.5" fill="#1F1D1A">英音 UK</text>
 
-    <!-- Audio Buttons -->
-    <rect x="284" y="24" width="70" height="30" rx="15" fill="#312E81" stroke="#6366F1"/>
-    <text x="319" y="44" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-weight="600" font-size="12" fill="#E0E7FF">🔊 美音</text>
+    <!-- Primary zh-TW Box -->
+    <rect x="22" y="122" width="404" height="40" rx="8" fill="#F3ECE0" stroke="#DFD6C7"/>
+    <rect x="22" y="122" width="3.5" height="40" fill="#C85A32"/>
+    <text x="36" y="147" font-family="'Noto Sans TC', sans-serif" font-weight="700" font-size="16" fill="#1F1D1A">意外發現珍貴事物的運氣；機緣巧合</text>
 
-    <rect x="364" y="24" width="70" height="30" rx="15" fill="#334155" stroke="#475569"/>
-    <text x="399" y="44" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-weight="600" font-size="12" fill="#CBD5E1">🔊 英音</text>
+    <!-- POS Pill -->
+    <rect x="22" y="176" width="66" height="22" rx="5" fill="#3B5B8C" fill-opacity="0.14" stroke="#3B5B8C" stroke-opacity="0.4"/>
+    <text x="55" y="191" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="700" font-size="11.5" fill="#3B5B8C">n. 名詞</text>
 
-    <!-- Primary zh-TW Meaning -->
-    <rect x="24" y="84" width="408" height="46" rx="10" fill="#0F172A"/>
-    <text x="38" y="113" font-family="'Noto Sans TC', sans-serif" font-weight="700" font-size="18" fill="#F472B6">意外發現珍貴事物的運氣；機緣巧合</text>
+    <!-- Example Box -->
+    <rect x="22" y="208" width="404" height="62" rx="8" fill="#FFFFFF" stroke="#E4DDD1"/>
+    <text x="34" y="230" font-family="'Segoe UI', sans-serif" font-size="12.5" fill="#2C2925">“Finding this open-source tool was pure serendipity.”</text>
+    <text x="34" y="253" font-family="'Noto Sans TC', sans-serif" font-size="12.5" fill="#6B655B">「找到這個開源工具純屬機緣巧合。」</text>
 
-    <!-- Part of Speech -->
-    <rect x="24" y="146" width="54" height="24" rx="6" fill="#6366F1" fill-opacity="0.25"/>
-    <text x="51" y="162" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-weight="700" font-size="12" fill="#A5B4FC">noun</text>
-    <text x="90" y="162" font-family="'Noto Sans TC', sans-serif" font-size="13" fill="#E2E8F0">名詞 · 偶然發現美好事物的能力</text>
-
-    <!-- Example Sentence Box -->
-    <rect x="24" y="184" width="408" height="82" rx="10" fill="#0F172A" fill-opacity="0.65" stroke="#334155"/>
-    <text x="38" y="208" font-family="'Segoe UI', sans-serif" font-size="13" fill="#CBD5E1">“Finding this open-source tool was pure serendipity.”</text>
-    <text x="38" y="232" font-family="'Noto Sans TC', sans-serif" font-size="13" fill="#94A3B8">「找到這個開源工具純屬機緣巧合。」</text>
-    <text x="38" y="254" font-family="'Segoe UI', sans-serif" font-size="11" fill="#64748B">例句來源：Free Dictionary · 繁中在地化翻譯</text>
-
-    <!-- Footer Bar -->
-    <text x="24" y="296" font-family="'Segoe UI', sans-serif" font-size="12" fill="#64748B">TransMao · Shadow DOM 隔離渲染</text>
-    <text x="358" y="296" font-family="'Noto Sans TC', sans-serif" font-weight="600" font-size="12" fill="#818CF8">★ 收藏單字</text>
+    <!-- Footer -->
+    <rect y="282" width="448" height="38" rx="14" fill="#F5EFE6"/>
+    <line x1="0" y1="282" x2="448" y2="282" stroke="#D8D1C5" stroke-dasharray="4 4"/>
+    <text x="22" y="306" font-family="'Noto Sans TC', sans-serif" font-size="11.5" fill="#787166">TransMao · Google (zh-TW)</text>
+    <rect x="362" y="291" width="64" height="22" rx="6" fill="#C85A32" stroke="#26231F" stroke-width="1"/>
+    <text x="394" y="306" text-anchor="middle" font-family="'Noto Sans TC', sans-serif" font-weight="700" font-size="11" fill="#FBF9F5">已收藏</text>
   </g>
 </svg>

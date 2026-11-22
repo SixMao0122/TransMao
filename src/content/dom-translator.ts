@@ -95,21 +95,23 @@ export class PageDomTranslator {
     style.textContent = `
       .${BILINGUAL_CLASS} {
         display: block;
-        margin-top: 3px;
-        margin-bottom: 4px;
-        font-size: 0.92em;
-        line-height: 1.55;
+        margin: 6px 0 10px;
+        padding: 6px 11px;
+        font-size: 0.93em;
+        line-height: 1.6;
         color: inherit;
-        opacity: 0.78;
-        border-left: 2.5px solid #818cf8;
-        padding-left: 8px;
+        background: rgba(214, 178, 128, 0.16);
+        border-left: 3px solid #c85a32;
+        border-radius: 0 7px 7px 0;
         font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
       }
       a .${BILINGUAL_CLASS}, button .${BILINGUAL_CLASS}, span .${BILINGUAL_CLASS}, li > .${BILINGUAL_CLASS} {
-        display: inline;
+        display: inline-block;
+        padding: 1px 6px;
+        margin: 0 0 0 5px;
         border-left: none;
-        padding-left: 4px;
-        margin: 0;
+        border-radius: 4px;
+        background: rgba(214, 178, 128, 0.18);
       }
     `;
     document.head.appendChild(style);
