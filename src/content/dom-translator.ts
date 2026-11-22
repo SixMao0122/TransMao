@@ -211,9 +211,9 @@ export class PageDomTranslator {
       rawTexts.push(text);
     }
 
-    // 2. 依引擎特性採用小批次漸進回傳：HF 本地模型每批 2 段，讓首屏最快顯示
+    // 2. 依引擎特性採用小批次漸進回傳：HF 本地模型逐段回傳（每批 1 段），確保 1~2 秒內立即顯示且絕不逾時
     const isLocalHf = this.engineMode === 'hf-local';
-    const batches = splitIntoBatches(rawTexts, isLocalHf ? 450 : 900, isLocalHf ? 2 : 6);
+    const batches = splitIntoBatches(rawTexts, isLocalHf ? 360 : 900, isLocalHf ? 1 : 6);
     let offset = 0;
     this.translating = true;
 
