@@ -95,6 +95,26 @@ async function build() {
     format: 'esm',
     // Avoid bundling Node-only sharp/onnxruntime-node inside browser build
     external: ['sharp', 'onnxruntime-node'],
+    plugins: [
+      {
+        name: 'patch-ort-local-wasm',
+        setup(buildApi) {
+          buildApi.onEnd(() => {
+            const outFile = path.join(DIST, 'offscreen.js');
+            if (!fs.existsSync(outFile)) return;
+            const code = fs.readFileSync(outFile, 'utf8');
+            // 徹底移除 transformers.js 內建的遠端 jsdelivr CDN 路徑，強制導向本機擴充套件 ort/ 目錄
+            const patched = code.replace(
+              /`https:\/\/cdn\.jsdelivr\.net\/npm\/@huggingface\/transformers@\$\{[^}]+\}\/dist\/`/g,
+              'chrome.runtime.getURL("ort/")'
+            );
+            if (patched !== code) {
+              fs.writeFileSync(outFile, patched, 'utf8');
+            }
+          });
+        },
+      },
+    ],
   };
 
   const configs = [contentConfig, backgroundConfig, uiConfig, offscreenConfig];

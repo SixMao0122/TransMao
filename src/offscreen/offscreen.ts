@@ -2,14 +2,38 @@ import { env, pipeline } from '@huggingface/transformers';
 import { toTraditionalTW } from '../shared/opencc';
 import { HfModelId, HfModelStatus, RuntimeMessage } from '../shared/types';
 
-// 設定瀏覽器端執行環境：使用本機擴充套件內建的 ORT WASM（符合 Chrome MV3 CSP，絕不從遠端 CDN 載入可執行腳本）
+// 設定瀏覽器端執行環境：使用本機擴充套件內建的 ORT WASM（符合 Chrome MV3 CSP）
 env.allowLocalModels = false;
 env.useBrowserCache = true;
-if (env.backends?.onnx?.wasm) {
-  env.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL('ort/');
-  env.backends.onnx.wasm.numThreads = 1;
-  env.backends.onnx.wasm.proxy = false;
+
+function configureLocalOnnxRuntime(): void {
+  const ortBase = chrome.runtime.getURL('ort/');
+  const backends = env.backends as {
+    onnx?: {
+      wasm?: {
+        wasmPaths?: string | { mjs?: string; wasm?: string };
+        numThreads?: number;
+        proxy?: boolean;
+      };
+    };
+  };
+
+  if (!backends.onnx) {
+    backends.onnx = {};
+  }
+  if (!backends.onnx.wasm) {
+    backends.onnx.wasm = {};
+  }
+
+  backends.onnx.wasm.wasmPaths = {
+    mjs: `${ortBase}ort-wasm-simd-threaded.jsep.mjs`,
+    wasm: `${ortBase}ort-wasm-simd-threaded.jsep.wasm`,
+  };
+  backends.onnx.wasm.numThreads = 1;
+  backends.onnx.wasm.proxy = false;
 }
+
+configureLocalOnnxRuntime();
 
 type TranslationPipeline = (
   input: string | string[],
@@ -30,6 +54,9 @@ async function ensureModelLoaded(modelId: HfModelId): Promise<TranslationPipelin
     return activePipeline;
   }
 
+  // 在每次載入模型前再次強制鎖定本機 ORT WASM 路徑，避免非同步初始化覆寫為遠端 CDN
+  configureLocalOnnxRuntime();
+
   status = {
     ready: false,
     loading: true,
@@ -40,6 +67,7 @@ async function ensureModelLoaded(modelId: HfModelId): Promise<TranslationPipelin
   try {
     const translator = await pipeline('translation', modelId, {
       dtype: 'q8',
+      device: 'wasm',
       progress_callback: (info: { status?: string; progress?: number }) => {
         if (typeof info.progress === 'number') {
           status.progress = Math.round(info.progress);

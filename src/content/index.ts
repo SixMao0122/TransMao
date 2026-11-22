@@ -27,7 +27,19 @@ async function init(): Promise<void> {
 
 void init();
 
+function isExtensionAlive(): boolean {
+  try {
+    return Boolean(chrome.runtime?.id);
+  } catch {
+    return false;
+  }
+}
+
 async function triggerLookup(text: string, anchor: BoxRect): Promise<void> {
+  if (!isExtensionAlive()) {
+    popover.showErrorCard(text, '擴充套件已更新，請按 F5 重新整理此分頁以啟用最新版本。', anchor);
+    return;
+  }
   popover.showLoadingCard(text, anchor);
   try {
     const res = (await chrome.runtime.sendMessage({
@@ -41,12 +53,17 @@ async function triggerLookup(text: string, anchor: BoxRect): Promise<void> {
       popover.showErrorCard(text, res?.error || '無法取得釋義', anchor);
     }
   } catch (err) {
-    popover.showErrorCard(text, err instanceof Error ? err.message : String(err), anchor);
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    const friendlyMsg = rawMsg.includes('Extension context invalidated')
+      ? '擴充套件已更新，請按 F5 重新整理此分頁以啟用最新版本。'
+      : rawMsg;
+    popover.showErrorCard(text, friendlyMsg, anchor);
   }
 }
 
 // 監聽反白選取事件
 document.addEventListener('mouseup', (event) => {
+  if (!isExtensionAlive()) return;
   if (popover.isEventInside(event)) return;
   if (!settings.selectionEnabled || isCurrentHostBlacklisted()) return;
 
