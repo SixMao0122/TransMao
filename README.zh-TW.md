@@ -24,7 +24,7 @@
 ## 功能預覽 (Preview)
 
 <div align="center">
-  <img src="./assets/preview.svg" alt="TransMao Dictionary Popover Preview" width="88%" />
+  <img src="./assets/preview.svg" alt="TransMao Dictionary Popover Preview" width="100%" />
 </div>
 
 ---
@@ -48,22 +48,6 @@
 | :--- | :--- | :--- |
 | **`Xenova/opus-mt-en-zh`** | ~80 MB | 極輕量、速度最快，自動搭配 `opencc-js` (`s2twp`) 轉為台灣繁體中文 |
 | **`Xenova/nllb-200-distilled-600M`** | ~350 MB | Meta 多語蒸餾翻譯模型，原生支援 `zho_Hant` 繁體中文 |
-
----
-
-## 系統架構 (Architecture)
-
-```mermaid
-flowchart LR
-    Webpage["目標英文網頁 DOM"] --> Content["Content Script (IntersectionObserver + Shadow DOM Popover)"]
-    Content <-->|"chrome.runtime"| BG["Background Service Worker (快取 + 4 層 Failover Router)"]
-    BG --> Clients5["Google Clients5 (原生多筆批次)"]
-    BG --> Google["Google GTX RPC & Rich Dict"]
-    BG --> MyMemory["MyMemory 雲端備援 (5 路並發)"]
-    BG --> Dict["Free Dictionary API (音標/真人 MP3)"]
-    BG <--> Offscreen["Offscreen Document (Local ORT WASM + Transformers.js)"]
-    Offscreen --> HF["Hugging Face 超小模型 (opus-mt / nllb-200)"]
-```
 
 ---
 
@@ -118,5 +102,4 @@ TransMao 尊重使用者隱私，不收集任何個人瀏覽紀錄或遙測資�
 
 ## 授權條款 (License)
 
-本專案採用 **[Apache License 2.0](./LICENSE)** 開源授權。  
-作者: **SxiMao** ([@SixMao0122](https://github.com/SixMao0122))
+本專案採用 **[Apache License 2.0](./LICENSE)** 開源授權。

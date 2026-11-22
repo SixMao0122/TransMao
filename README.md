@@ -24,7 +24,7 @@
 ## Preview
 
 <div align="center">
-  <img src="./assets/preview.svg" alt="TransMao Dictionary Popover Preview" width="88%" />
+  <img src="./assets/preview.svg" alt="TransMao Dictionary Popover Preview" width="100%" />
 </div>
 
 ---
@@ -48,22 +48,6 @@
 | :--- | :--- | :--- |
 | **`Xenova/opus-mt-en-zh`** | ~80 MB | Ultra-lightweight and fast; paired with `opencc-js` (`s2twp`) for `zh-TW` localization |
 | **`Xenova/nllb-200-distilled-600M`** | ~350 MB | Meta distilled multilingual NMT model with native `zho_Hant` support |
-
----
-
-## Architecture
-
-```mermaid
-flowchart LR
-    Webpage["Host Webpage DOM"] --> Content["Content Script (IntersectionObserver + Shadow DOM Popover)"]
-    Content <-->|"chrome.runtime"| BG["Background Service Worker (Cache + 4-Layer Failover Router)"]
-    BG --> Clients5["Google Clients5 (Native Batch Array)"]
-    BG --> Google["Google GTX RPC & Rich Dict"]
-    BG --> MyMemory["MyMemory Cloud Fallback (5x Parallel)"]
-    BG --> Dict["Free Dictionary API (IPA / Human MP3)"]
-    BG <--> Offscreen["Offscreen Document (Local ORT WASM + Transformers.js)"]
-    Offscreen --> HF["Hugging Face Small Models (opus-mt / nllb-200)"]
-```
 
 ---
 
@@ -116,5 +100,4 @@ Issues, feature suggestions, and pull requests are welcome! Please read [CONTRIB
 
 ## License
 
-Licensed under the **[Apache License 2.0](./LICENSE)**.  
-Author: **SxiMao** ([@SixMao0122](https://github.com/SixMao0122))
+Licensed under the **[Apache License 2.0](./LICENSE)**.
